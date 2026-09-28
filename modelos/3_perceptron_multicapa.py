@@ -44,16 +44,22 @@ from sklearn.metrics import (
     classification_report, confusion_matrix, roc_curve, 
     precision_recall_curve, average_precision_score
 )
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
+try:
+    import torch
+    import torch.nn as nn
+    import torch.optim as optim
+    from torch.utils.data import DataLoader, TensorDataset
+    HAS_TORCH = True
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Backend: PyTorch ({DEVICE})")
+except ImportError:
+    HAS_TORCH = False
+    from sklearn.neural_network import MLPClassifier
+    DEVICE = 'cpu (Scikit-Learn MLPClassifier)'
+    print(f"Backend: Scikit-Learn MLPClassifier (PyTorch no instalado)")
+
 import warnings
 warnings.filterwarnings('ignore')
-
-# Configuración de dispositivo
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Dispositivo: {DEVICE}")
 
 # ============================================================================
 # CONFIGURACIÓN
@@ -160,134 +166,115 @@ print("   • Evita saturación de funciones de activación")
 print("\n[5/8] Construyendo arquitectura de Red Neuronal...")
 print("-" * 80)
 
-class MLP(nn.Module):
-    def __init__(self, input_dim):
-        super(MLP, self).__init__()
-        self.layer1 = nn.Linear(input_dim, 64)
-        self.dropout1 = nn.Dropout(0.5)
-        self.layer2 = nn.Linear(64, 32)
-        self.dropout2 = nn.Dropout(0.5)
-        self.output = nn.Linear(32, 1)
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
+if HAS_TORCH:
+    class MLP(nn.Module):
+        def __init__(self, input_dim):
+            super(MLP, self).__init__()
+            self.layer1 = nn.Linear(input_dim, 64)
+            self.dropout1 = nn.Dropout(0.5)
+            self.layer2 = nn.Linear(64, 32)
+            self.dropout2 = nn.Dropout(0.5)
+            self.output = nn.Linear(32, 1)
+            self.relu = nn.ReLU()
+            self.sigmoid = nn.Sigmoid()
+            
+        def forward(self, x):
+            x = self.relu(self.layer1(x))
+            x = self.dropout1(x)
+            x = self.relu(self.layer2(x))
+            x = self.dropout2(x)
+            x = self.sigmoid(self.output(x))
+            return x
+
+    print("Arquitectura PyTorch:")
+    print(f"  • Capa de entrada: {X.shape[1]} neuronas (una por feature)")
+    print("  • Capa oculta 1: 64 neuronas, ReLU, Dropout 0.5")
+    print("  • Capa oculta 2: 32 neuronas, ReLU, Dropout 0.5")
+    print("  • Capa de salida: 1 neurona, Sigmoid (probabilidad binaria)")
+
+    model = MLP(X_train.shape[1]).to(DEVICE)
+    optimizer = optim.Adam(model.parameters())
+    criterion = nn.BCELoss(reduction='none')
+
+    # Calcular class weights para manejar desbalance
+    from sklearn.utils.class_weight import compute_class_weight
+    classes = np.array([0, 1])
+    class_weights = compute_class_weight('balanced', classes=classes, y=y_train.values)
+    class_weights_tensor = torch.FloatTensor(class_weights).to(DEVICE)
+    print(f"Class weights: Negativa={class_weights[0]:.4f}, Positiva={class_weights[1]:.4f}")
+
+    # Convertir a tensores
+    X_train_tensor = torch.FloatTensor(X_train_scaled).to(DEVICE)
+    y_train_tensor = torch.FloatTensor(y_train.values).unsqueeze(1).to(DEVICE)
+    X_val_tensor = torch.FloatTensor(X_test_scaled).to(DEVICE)
+    y_val_tensor = torch.FloatTensor(y_test.values).unsqueeze(1).to(DEVICE)
+
+    best_val_loss = float('inf')
+    patience = 10
+    patience_counter = 0
+    best_weights = None
+    history = {'loss': [], 'val_loss': []}
+
+    model.train()
+    for epoch in range(100):
+        optimizer.zero_grad()
+        outputs = model(X_train_tensor)
+        loss_per_sample = criterion(outputs, y_train_tensor)
+        weights = y_train_tensor * class_weights_tensor[1] + (1 - y_train_tensor) * class_weights_tensor[0]
+        loss = (loss_per_sample * weights).mean()
+        loss.backward()
+        optimizer.step()
         
-    def forward(self, x):
-        x = self.relu(self.layer1(x))
-        x = self.dropout1(x)
-        x = self.relu(self.layer2(x))
-        x = self.dropout2(x)
-        x = self.sigmoid(self.output(x))
-        return x
+        model.eval()
+        with torch.no_grad():
+            val_outputs = model(X_val_tensor)
+            val_loss_sample = criterion(val_outputs, y_val_tensor)
+            val_weights = y_val_tensor * class_weights_tensor[1] + (1 - y_val_tensor) * class_weights_tensor[0]
+            val_loss = (val_loss_sample * val_weights).mean().item()
+        
+        model.train()
+        history['loss'].append(loss.item())
+        history['val_loss'].append(val_loss)
+        
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            patience_counter = 0
+            best_weights = model.state_dict().copy()
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                print(f"  Early stopping activado en época {epoch + 1}")
+                break
 
-print("Arquitectura:")
-print(f"  • Capa de entrada: {X.shape[1]} neuronas (una por feature)")
-print("  • Capa oculta 1: 64 neuronas, ReLU, Dropout 0.5")
-print("  • Capa oculta 2: 32 neuronas, ReLU, Dropout 0.5")
-print("  • Capa de salida: 1 neurona, Sigmoid (probabilidad binaria)")
+    if best_weights is not None:
+        model.load_state_dict(best_weights)
 
-# Crear modelo
-model = MLP(X_train.shape[1]).to(DEVICE)
-
-# Compilación del modelo
-print("\nCompilación:")
-print("  • Optimizador: Adam")
-print("  • Función de pérdida: Binary cross-entropy (clase victoria)")
-
-optimizer = optim.Adam(model.parameters())
-criterion = nn.BCELoss(reduction='none')
-
-print("\n✓ Modelo compilado exitosamente")
-print(model)
-
-# ============================================================================
-# SECCIÓN 6: ENTRENAMIENTO CON EARLY STOPPING Y CLASS WEIGHTING
-# ============================================================================
-
-print("\n[6/8] Entrenando modelo con Early Stopping...")
-print("-" * 80)
-
-# Calcular class weights para manejar desbalance
-from sklearn.utils.class_weight import compute_class_weight
-classes = np.array([0, 1])
-class_weights = compute_class_weight('balanced', classes=classes, y=y_train.values)
-class_weights_tensor = torch.FloatTensor(class_weights).to(DEVICE)
-print(f"Class weights: Negativa={class_weights[0]:.4f}, Positiva={class_weights[1]:.4f}")
-
-# Convertir a tensores
-X_train_tensor = torch.FloatTensor(X_train_scaled).to(DEVICE)
-y_train_tensor = torch.FloatTensor(y_train.values).unsqueeze(1).to(DEVICE)
-X_val_tensor = torch.FloatTensor(X_test_scaled).to(DEVICE)
-y_val_tensor = torch.FloatTensor(y_test.values).unsqueeze(1).to(DEVICE)
-
-# Early stopping para prevenir overfitting
-best_val_loss = float('inf')
-patience = 10
-patience_counter = 0
-best_weights = None
-
-history = {'loss': [], 'val_loss': []}
-
-# Entrenamiento
-model.train()
-for epoch in range(100):
-    # Forward pass
-    optimizer.zero_grad()
-    outputs = model(X_train_tensor)
-    
-    # Loss con class weighting real por muestra
-    loss_per_sample = criterion(outputs, y_train_tensor)
-    weights = y_train_tensor * class_weights_tensor[1] + (1 - y_train_tensor) * class_weights_tensor[0]
-    loss = (loss_per_sample * weights).mean()
-    
-    # Backward pass
-    loss.backward()
-    optimizer.step()
-    
-    # Validación
     model.eval()
     with torch.no_grad():
-        val_outputs = model(X_val_tensor)
-        val_loss_sample = criterion(val_outputs, y_val_tensor)
-        val_weights = y_val_tensor * class_weights_tensor[1] + (1 - y_val_tensor) * class_weights_tensor[0]
-        val_loss = (val_loss_sample * val_weights).mean().item()
+        y_train_pred_proba = model(X_train_tensor).cpu().numpy().flatten()
+        y_test_pred_proba = model(torch.FloatTensor(X_test_scaled).to(DEVICE)).cpu().numpy().flatten()
+else:
+    print("Arquitectura Scikit-Learn MLPClassifier:")
+    print(f"  • Capa de entrada: {X.shape[1]} neuronas")
+    print("  • Capas ocultas: (64, 32), ReLU, Early Stopping")
     
-    model.train()
+    model = MLPClassifier(
+        hidden_layer_sizes=(64, 32),
+        activation='relu',
+        solver='adam',
+        max_iter=100,
+        random_state=42,
+        early_stopping=True,
+        n_iter_no_change=10
+    )
+    model.fit(X_train_scaled, y_train)
+    history = {'loss': model.loss_curve_, 'val_loss': getattr(model, 'validation_scores_', [])}
     
-    history['loss'].append(loss.item())
-    history['val_loss'].append(val_loss)
-    
-    # Early stopping
-    if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        patience_counter = 0
-        best_weights = model.state_dict().copy()
-    else:
-        patience_counter += 1
-        if patience_counter >= patience:
-            print(f"  Early stopping activado en época {epoch + 1}")
-            break
-    
-    if (epoch + 1) % 10 == 0:
-        print(f"  Epoch {epoch + 1}: loss={loss.item():.4f}, val_loss={val_loss:.4f}")
-
-# Restaurar mejores pesos
-if best_weights is not None:
-    model.load_state_dict(best_weights)
+    y_train_pred_proba = model.predict_proba(X_train_scaled)[:, 1]
+    y_test_pred_proba = model.predict_proba(X_test_scaled)[:, 1]
 
 print(f"\n✓ Entrenamiento completado")
 print(f"  • Epochs ejecutadas: {len(history['loss'])}")
-
-# ============================================================================
-# SECCIÓN 7: PREDICCIONES
-# ============================================================================
-
-print("\n[7/8] Realizando predicciones...")
-
-model.eval()
-with torch.no_grad():
-    # Predicciones de probabilidad
-    y_train_pred_proba = model(X_train_tensor).cpu().numpy().flatten()
-    y_test_pred_proba = model(torch.FloatTensor(X_test_scaled).to(DEVICE)).cpu().numpy().flatten()
 
 # Predicciones binarias (umbral ajustado para clase desbalanceada)
 threshold = 0.3  # Umbral más bajo para capturar más victorias
@@ -359,7 +346,10 @@ print("ANÁLISIS DE IMPORTANCIA DE VARIABLES")
 print("="*80)
 
 # Extraer pesos de la primera capa densa
-weights = model.layer1.weight.detach().cpu().numpy()  # shape: (64, input_dim)
+if HAS_TORCH:
+    weights = model.layer1.weight.detach().cpu().numpy()  # shape: (64, input_dim)
+else:
+    weights = model.coefs_[0].T  # shape: (64, input_dim)
 
 print("\nAnálisis de pesos de la primera capa (Dense 1):")
 print(f"  • Forma de matriz de pesos: {weights.shape}")
@@ -612,6 +602,10 @@ print("    • Sensitive a inicialización de pesos")
 print("\n✨ LISTO PARA COMPARACIÓN CON OTROS MODELOS ✨")
 
 # Guardar modelo para futuras predicciones
-torch.save(model.state_dict(), f'{OUTPUT_DIR}/modelo_mlp.pt')
-print(f"\n💾 Modelo guardado en: {OUTPUT_DIR}/modelo_mlp.pt")
-print("   (Puede cargarlo con: model.load_state_dict(torch.load('modelo_mlp.pt')))")
+if HAS_TORCH:
+    torch.save(model.state_dict(), f'{OUTPUT_DIR}/modelo_mlp.pt')
+    print(f"\n💾 Modelo guardado en: {OUTPUT_DIR}/modelo_mlp.pt")
+else:
+    import joblib
+    joblib.dump(model, f'{OUTPUT_DIR}/modelo_mlp.joblib')
+    print(f"\n💾 Modelo guardado en: {OUTPUT_DIR}/modelo_mlp.joblib")

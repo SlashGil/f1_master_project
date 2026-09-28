@@ -328,26 +328,6 @@ for name, model in models.items():
     print(f"    AUC-ROC: {metrics['auc_roc']:.4f}")
     print(f"    Precision: {metrics['precision']:.4f}")
     print(f"    Recall: {metrics['recall']:.4f}")
-    
-    # Predicciones con threshold óptimo
-    y_pred_optimal = (y_proba >= best_threshold).astype(int)
-    
-    # Métricas
-    metrics = {
-        'f1_score': f1_score(y_test, y_pred_optimal),
-        'auc_roc': roc_auc_score(y_test, y_proba),
-        'precision': precision_score(y_test, y_pred_optimal, zero_division=0),
-        'recall': recall_score(y_test, y_pred_optimal, zero_division=0),
-        'threshold': best_threshold
-    }
-    
-    results_metrics[name] = metrics
-    
-    print(f"    F1-Score: {metrics['f1_score']:.4f}")
-    print(f"    AUC-ROC: {metrics['auc_roc']:.4f}")
-    print(f"    Precision: {metrics['precision']:.4f}")
-    print(f"    Recall: {metrics['recall']:.4f}")
-    print(f"    Best Threshold: {metrics['threshold']:.2f}")
 
 # ============================================================================
 # SECCIÓN 9: VISUALIZACIONES
