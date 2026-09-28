@@ -19,7 +19,7 @@ MÉTRICAS:
   - Precisión y Recall
   - Classification Report completo
 
-AUTOR: Proyecto Tesis F1
+AUTOR: Salvador Romero Gil
 FECHA: 2026
 """
 
@@ -27,7 +27,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import (
@@ -85,8 +84,8 @@ except FileNotFoundError:
 
 print("\n[2/7] Preparando Features y Target...")
 
-# Separar features y target
-X = df.drop('win', axis=1)
+# Separar features y target (excluyendo raceId como predictor para evitar fuga de información)
+X = df.drop(columns=['win', 'raceId'], errors='ignore')
 y = df['win']
 
 print(f"Features seleccionados: {X.shape[1]}")
@@ -96,18 +95,25 @@ print(f"Target: win (binario)")
 # SECCIÓN 3: DIVISIÓN DE DATOS
 # ============================================================================
 
-print("\n[3/7] Dividiendo datos en entrenamiento y prueba...")
+print("\n[3/7] Dividiendo datos con corte temporal (sin aleatoriedad)...")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, 
-    test_size=0.2, 
-    random_state=42,
-    stratify=y  # Estratificación para mantener proporción de clases
-)
+if {'year', 'round', 'raceId'}.issubset(df.columns):
+    df_sorted = df.sort_values(['year', 'round', 'raceId']).reset_index(drop=True)
+else:
+    df_sorted = df.sort_values('raceId').reset_index(drop=True)
 
-print(f"✓ Entrenamiento: {X_train.shape[0]} muestras")
-print(f"✓ Prueba: {X_test.shape[0]} muestras")
-print(f"✓ Estratificación aplicada para mantener distribución de clases")
+split_idx = int(len(df_sorted) * 0.8)
+train_df = df_sorted.iloc[:split_idx]
+test_df = df_sorted.iloc[split_idx:]
+
+X_train = train_df.drop(columns=['win', 'raceId'], errors='ignore')
+y_train = train_df['win']
+X_test = test_df.drop(columns=['win', 'raceId'], errors='ignore')
+y_test = test_df['win']
+
+print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras")
+print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras")
+print("✓ Split temporal aplicado (80/20 cronológico)")
 
 # Verificar balance en train/test
 print(f"\n  Entrenamiento - Victorias: {y_train.sum()} ({y_train.mean()*100:.2f}%)")
@@ -117,7 +123,7 @@ print(f"  Prueba - Victorias: {y_test.sum()} ({y_test.mean()*100:.2f}%)")
 # SECCIÓN 4: ESCALADO DE CARACTERÍSTICAS
 # ============================================================================
 
-print("\n[4/7] Aplicando StandardScaler a características...")
+print("\n[4/7] Aplicando StandardScaler después del split temporal...")
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -216,8 +222,6 @@ metricas = {
     'AUC_PR': pr_auc,
     'Precision_Test': test_precision,
     'Recall_Test': test_recall,
-    'R2_Test': test_r2,
-    'MSE_Test': test_mse,
     'Train_Size': X_train.shape[0],
     'Test_Size': X_test.shape[0]
 }

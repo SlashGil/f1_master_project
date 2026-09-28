@@ -1,0 +1,2 @@
+Modelo,Best_CV_F1,n_estimators,max_depth,min_samples_split,min_samples_leaf,class_weight
+Random Forest (Baseline),,100,10,5,2,balanced

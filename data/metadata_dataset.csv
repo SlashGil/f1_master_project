@@ -1,40 +1,16 @@
-tipo,clave,valor,descripcion,fuente,transformacion,tipo_dato,unidad,cardinalidad,valores,balance_clases,nombre,filas,columnas
-configuracion,version,1.0,,,,,,,,,,,
-configuracion,fecha_generacion,2026-03-04 21:10:54,,,,,,,,,,,
-configuracion,descripcion,Dataset unificado para modelos predictivos de victorias en F1,,,,,,,,,,,
-feature_original,age,,Edad actual del piloto en años,drivers.csv (dob),(fecha_actual - fecha_nacimiento) / 365,numérica continua,años,aprox. 20-45,,,,,
-feature_original,grid,,Posición de inicio en la carrera (de clasificación),results.csv,N/A (directo),numérica discreta,posición,1-20+,,,,,
-feature_original,positionOrder,,Posición final en la carrera,results.csv,N/A (directo),numérica discreta,posición,1-20+,,,,,
-feature_original,fastestLapSpeed,,Velocidad en la vuelta más rápida de la carrera,results.csv,N/A (directo),numérica continua,km/h,~200-350,,,,,
-feature_original,milliseconds_pit_stop,,Duración del primer pit stop del piloto,pit_stops.csv,"Renombrado de ""milliseconds""",numérica continua,milisegundos,~15000-40000,,,,,
-feature_original,milliseconds_lap_time,,Tiempo de una vuelta del piloto,lap_times.csv,"Renombrado de ""milliseconds""",numérica continua,milisegundos,~60000-120000,,,,,
-feature_original,nationality,,Nacionalidad del piloto,drivers.csv,One-hot encoding genera columnas nationality_COUNTRY,categórica nominal,N/A,aprox. 50 países diferentes,,,,,
-feature_original,constructorId,,Identificador del constructor/escudería,results.csv y constructors.csv,One-hot encoding genera columnas constructorId_N,categórica nominal,N/A,aprox. 220 constructores diferentes,,,,,
-target,win,,"Variable binaria: 1=el piloto ganó la carrera, 0=no ganó",Derivado de results.csv(positionOrder),"1 si positionOrder == 1, de lo contrario 0",binaria,,,"0 (no ganó), 1 (ganó)","Aprox. 5% victorias, 95% sin victorias (clase desbalanceada)",,,
-fusion,filas_antes_fusion,26759,,,,,,,,,,,
-fusion,filas_despues_fusion,655189,,,,,,,,,,,
-fusion,metodo_fusion,6 joins: 3 inner + 3 left,,,,,,,,,,,
-fusion,multiplicidad,N:M debido a pit_stops y lap_times,,,,,,,,,,,
-limpieza,filas_antes_limpieza,944280,,,,,,,,,,,
-limpieza,filas_despues_limpieza,655189,,,,,,,,,,,
-limpieza,filas_eliminadas,289091,,,,,,,,,,,
-limpieza,porcentaje_eliminado,30.61%,,,,,,,,,,,
-estadisticas_clases,total_observaciones,944280,,,,,,,,,,,
-estadisticas_clases,victorias,49984,,,,,,,,,,,
-estadisticas_clases,sin_victorias,894296,,,,,,,,,,,
-estadisticas_clases,porcentaje_victorias,5.29%,,,,,,,,,,,
-estadisticas_clases,balance_ratio,1:17.9,,,,,,,,,,,
-archivo_fuente,archivo_1,,,,,,,,,,circuits.csv,77.0,9.0
-archivo_fuente,archivo_2,,,,,,,,,,results.csv,26759.0,18.0
-archivo_fuente,archivo_3,,,,,,,,,,drivers.csv,861.0,9.0
-archivo_fuente,archivo_4,,,,,,,,,,pit_stops.csv,11371.0,7.0
-archivo_fuente,archivo_5,,,,,,,,,,races.csv,1125.0,18.0
-archivo_fuente,archivo_6,,,,,,,,,,qualifying.csv,10494.0,9.0
-archivo_fuente,archivo_7,,,,,,,,,,lap_times.csv,589081.0,6.0
-archivo_fuente,archivo_8,,,,,,,,,,constructors.csv,212.0,5.0
-dataset_final,nombre_archivo,dataset_tesis_f1.csv,,,,,,,,,,,
-dataset_final,observaciones,655189,,,,,,,,,,,
-dataset_final,columnas_totales,56,,,,,,,,,,,
-dataset_final,features_numericas,5,,,,,,,,,,,
-dataset_final,features_nationality,27,,,,,,,,,,,
-dataset_final,features_constructorid,23,,,,,,,,,,,
+tipo,clave,valor
+configuracion,version,2.0
+configuracion,fecha_generacion,2026-04-16 11:25:10
+configuracion,descripcion,Dataset pre-carrera para predicción de victoria en F1 (sin fuga temporal)
+metodologia,split_recomendado,TimeSeriesSplit / corte temporal por año-ronda (no random 80/20)
+metodologia,escalado_recomendado,Ajustar scaler SOLO con train y luego transformar test
+metodologia,features_excluidas_por_fuga,"fastestLapSpeed, milliseconds_pit_stop, milliseconds_lap_time, positionOrder (como feature)"
+dataset_final,nombre_archivo,dataset_tesis_f1.csv
+dataset_final,observaciones,25121
+dataset_final,columnas_totales,247
+dataset_final,features_numericas_base,"age, grid, year, round"
+dataset_final,features_categoricas_base,"nationality, constructorId"
+estadisticas_clases,total_observaciones,25121
+estadisticas_clases,victorias,1128
+estadisticas_clases,sin_victorias,23993
+estadisticas_clases,porcentaje_victorias,4.49%

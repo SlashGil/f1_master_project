@@ -32,7 +32,7 @@ PARÁMETROS DE ENTRENAMIENTO:
   - solver='lbfgs': Algoritmo de optimización quasi-Newton
   - C=1.0: Parámetro de regularización inversa (menor = mayor regularización)
 
-AUTOR: Proyecto Tesis F1
+AUTOR: Salvador Romero Gil
 FECHA: 2026
 """
 
@@ -40,7 +40,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
@@ -105,13 +104,12 @@ except FileNotFoundError:
 
 print("\n[2/8] Preparando Features (X) y Target (y)...")
 
-# Separar features y target
-X = df.drop('win', axis=1)
+# Separar features y target (excluyendo raceId como predictor para evitar fuga de información)
+X = df.drop(columns=['win', 'raceId'], errors='ignore')
 y = df['win']
 
 print(f"✓ Features seleccionados: {X.shape[1]} variables predictoras")
-print(f"  Incluye: grid, positionOrder, points, laps, fastestLapSpeed,")
-print(f"           variables dummy de constructorId y nationality, etc.")
+print(f"  Incluye variables pre-carrera (grid, year, round, dummies de constructor/nationality)")
 print(f"✓ Target: win (binario: 1=Victoria, 0=No Victoria)")
 
 # Guardar nombres de features para análisis posterior
@@ -121,18 +119,25 @@ feature_names = X.columns.tolist()
 # SECCIÓN 3: DIVISIÓN DE DATOS (TRAIN/TEST)
 # ============================================================================
 
-print("\n[3/8] Dividiendo datos en entrenamiento y prueba...")
+print("\n[3/8] Dividiendo datos con corte temporal (sin aleatoriedad)...")
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y,
-    test_size=0.2,
-    random_state=42,
-    stratify=y  # Estratificación esencial para mantener proporción de clases
-)
+if {'year', 'round', 'raceId'}.issubset(df.columns):
+    df_sorted = df.sort_values(['year', 'round', 'raceId']).reset_index(drop=True)
+else:
+    df_sorted = df.sort_values('raceId').reset_index(drop=True)
 
-print(f"✓ Entrenamiento: {X_train.shape[0]} muestras ({X_train.shape[0]/len(X)*100:.1f}%)")
-print(f"✓ Prueba: {X_test.shape[0]} muestras ({X_test.shape[0]/len(X)*100:.1f}%)")
-print(f"✓ Estratificación aplicada para preservar distribución de clases")
+split_idx = int(len(df_sorted) * 0.8)
+train_df = df_sorted.iloc[:split_idx]
+test_df = df_sorted.iloc[split_idx:]
+
+X_train = train_df.drop(columns=['win', 'raceId'], errors='ignore')
+y_train = train_df['win']
+X_test = test_df.drop(columns=['win', 'raceId'], errors='ignore')
+y_test = test_df['win']
+
+print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.1f}%)")
+print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.1f}%)")
+print("✓ Split temporal aplicado (80/20 cronológico)")
 
 # Verificar balance en conjuntos
 print(f"\n  Distribución en entrenamiento:")
@@ -146,8 +151,8 @@ print(f"    • No victorias: {len(y_test) - y_test.sum()} ({(1-y_test.mean())*1
 # SECCIÓN 4: ESCALADO DE CARACTERÍSTICAS
 # ============================================================================
 
-print("\n[4/8] Aplicando StandardScaler a características...")
-print("   Nota: El escalado es crucial para Regresión Logística con regularización")
+print("\n[4/8] Aplicando StandardScaler después del split temporal...")
+print("   Nota: El escalado se ajusta solo en train para evitar fuga de información")
 
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
@@ -339,16 +344,14 @@ metricas = {
     'F1_Test': f1_test,
     'AUC_ROC': roc_auc,
     'AUC_PR': pr_auc,
-    'LogLoss_Test': logloss_test,
-    'Intercepto': model.intercept_[0],
-    'N_Coeficientes': len(model.coef_[0]),
-    'Tiempo_Entrenamiento_s': training_time,
-    'Iteraciones': model.n_iter_,
-    'Convergio': model.n_iter_ < model_config['max_iter']
+    'Precision_Test': precision_score(y_test, y_test_pred),
+    'Recall_Test': recall_score(y_test, y_test_pred),
+    'Train_Size': X_train.shape[0],
+    'Test_Size': X_test.shape[0]
 }
 metricas_df = pd.DataFrame([metricas])
-metricas_df.to_csv(f'{OUTPUT_DIR}/metricas_modelo.csv', index=False)
-print(f"\n✓ Métricas guardadas en {OUTPUT_DIR}/metricas_modelo.csv")
+metricas_df.to_csv(f'{OUTPUT_DIR}/metricas_comparativa.csv', index=False)
+print(f"\n✓ Métricas guardadas en {OUTPUT_DIR}/metricas_comparativa.csv")
 
 # ============================================================================
 # SECCIÓN 10: VISUALIZACIONES
@@ -436,6 +439,23 @@ plt.tight_layout()
 plt.savefig(f'{OUTPUT_DIR}/04_odds_ratios.png', dpi=300, bbox_inches='tight')
 print("✓ Visualización 4: 04_odds_ratios.png")
 
+# Visualización 5: Curva ROC
+plt.figure(figsize=(10, 8))
+fpr, tpr, _ = roc_curve(y_test, y_test_proba)
+plt.plot(fpr, tpr, color='#2E86AB', linewidth=3, label=f'ROC Curve (AUC = {roc_auc:.4f})')
+plt.plot([0, 1], [0, 1], color='gray', linestyle='--', linewidth=2, label='Random Classifier (AUC = 0.5)')
+plt.fill_between(fpr, tpr, alpha=0.3, color='#2E86AB')
+plt.xlabel('Tasa de Falsos Positivos (1 - Especificidad)', fontsize=12, fontweight='bold')
+plt.ylabel('Tasa de Verdaderos Positivos (Sensibilidad)', fontsize=12, fontweight='bold')
+plt.title('Curva ROC - Regresión Logística\n(Capacidad Discriminativa del Modelo)', fontsize=14, fontweight='bold')
+plt.legend(loc='lower right', fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.tight_layout()
+plt.savefig(f'{OUTPUT_DIR}/05_curva_roc.png', dpi=300, bbox_inches='tight')
+print("✓ Visualización 5: 05_curva_roc.png")
+
 # ============================================================================
 # SECCIÓN 11: RESUMEN EJECUTIVO
 # ============================================================================
@@ -468,7 +488,7 @@ print(f"  • Mayor efecto negativo: {top_neg_var['variable']} (β={top_neg_var[
 
 print(f"\n📁 ARCHIVOS GENERADOS:")
 print(f"  • {OUTPUT_DIR}/tabla_coeficientes_logistica.csv (todos los coeficientes)")
-print(f"  • {OUTPUT_DIR}/metricas_modelo.csv (métricas de rendimiento)")
+print(f"  • {OUTPUT_DIR}/metricas_comparativa.csv (métricas de rendimiento)")
 print(f"  • {OUTPUT_DIR}/01_coeficientes_top20.png")
 print(f"  • {OUTPUT_DIR}/02_coeficientes_polaridad.png")
 print(f"  • {OUTPUT_DIR}/03_distribucion_coeficientes.png")
@@ -491,3 +511,28 @@ print("  • El escalado de características mejoró la estabilidad numérica")
 print("  • Grid (posición de salida) emerge como predictor dominante")
 
 print("\n✨ LISTO PARA FASE DE EVALUACIÓN DETALLADA ✨")
+
+# ============================================================================
+# SECCIÓN 12: MÉTRICAS ADICIONALES - VALORES CLAVE DE CLASIFICACIÓN
+# ============================================================================
+
+print("\n" + "="*80)
+print("MÉTRICAS ADICIONALES - VALORES CLAVE DE CLASIFICACIÓN")
+print("="*80)
+
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
+
+print("\n📊 Exactitud (Accuracy):", accuracy_score(y_test, y_test_pred))
+print("📊 Precisión (Precision):", precision_score(y_test, y_test_pred))
+print("📊 Sensibilidad (Recall):", recall_score(y_test, y_test_pred))
+
+cm = confusion_matrix(y_test, y_test_pred)
+print("\n📊 Matriz de Confusión:")
+print("   Verdaderos Negativos (VN):", cm[0,0])
+print("   Falsos Positivos (FP):", cm[0,1])
+print("   Falsos Negativos (FN):", cm[1,0])
+print("   Verdaderos Positivos (VP):", cm[1,1])
+
+print("\n" + "="*80)
+print("ANÁLISIS COMPLETO FINALIZADO")
+print("="*80)

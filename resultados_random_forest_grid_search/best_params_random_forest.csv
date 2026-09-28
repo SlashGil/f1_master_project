@@ -1,0 +1,2 @@
+Modelo,Best_CV_F1,max_depth,min_samples_leaf,min_samples_split,n_estimators
+Random Forest (GridSearch),0.293874155563729,12,2,5,100

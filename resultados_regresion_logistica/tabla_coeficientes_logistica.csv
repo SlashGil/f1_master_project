@@ -1,56 +1,247 @@
 variable,coeficiente,odds_ratio,abs_coeficiente,interpretacion_odds
-grid,-2.140035,0.117651,2.140035,x0.12 (reduce)
-nationality_Brazilian,-1.750823,0.173631,1.750823,x0.17 (reduce)
-nationality_Canadian,-1.398072,0.247073,1.398072,x0.25 (reduce)
-constructorId_10,-1.290697,0.275079,1.290697,x0.28 (reduce)
-constructorId_117,-1.249702,0.286590,1.249702,x0.29 (reduce)
-constructorId_210,-1.237591,0.290082,1.237591,x0.29 (reduce)
-constructorId_9,1.235307,3.439434,1.235307,x3.44
-nationality_Russian,-1.162282,0.312772,1.162282,x0.31 (reduce)
-constructorId_5,-1.100986,0.332543,1.100986,x0.33 (reduce)
-constructorId_51,-1.080576,0.339400,1.080576,x0.34 (reduce)
-constructorId_131,1.062634,2.893982,1.062634,x2.89
-nationality_Thai,-1.060510,0.346279,1.060510,x0.35 (reduce)
-nationality_Japanese,-1.043251,0.352307,1.043251,x0.35 (reduce)
-nationality_British,1.014562,2.758154,1.014562,x2.76
-constructorId_6,0.978272,2.659856,0.978272,x2.66
-constructorId_4,-0.966478,0.380421,0.966478,x0.38 (reduce)
-nationality_German,0.797449,2.219871,0.797449,x2.22
-constructorId_15,-0.779203,0.458771,0.779203,x0.46 (reduce)
-constructorId_1,0.776920,2.174764,0.776920,x2.17
-nationality_Danish,-0.750892,0.471945,0.750892,x0.47 (reduce)
-nationality_Dutch,0.703532,2.020878,0.703532,x2.02
-constructorId_214,0.612388,1.844831,0.612388,x1.84
-constructorId_213,0.590510,1.804908,0.590510,x1.80
-nationality_Spanish,0.540635,1.717097,0.540635,x1.72
-constructorId_211,0.492818,1.636922,0.492818,x1.64
-nationality_French,0.479466,1.615212,0.479466,x1.62
-constructorId_208,0.472125,1.603399,0.472125,x1.60
-nationality_Polish,-0.469183,0.625513,0.469183,x0.63 (reduce)
-nationality_Venezuelan,0.438558,1.550470,0.438558,x1.55
-constructorId_3,0.416577,1.516761,0.416577,x1.52
-nationality_Australian,0.403092,1.496445,0.403092,x1.50
-nationality_Belgian,-0.296861,0.743147,0.296861,x0.74 (reduce)
-age,0.273474,1.314524,0.273474,x1.31
-nationality_Finnish,0.272978,1.313871,0.272978,x1.31
-constructorId_215,-0.270785,0.762780,0.270785,x0.76 (reduce)
-nationality_Italian,-0.256436,0.773804,0.256436,x0.77 (reduce)
-nationality_Monegasque,0.254072,1.289264,0.254072,x1.29
-nationality_Chinese,-0.250735,0.778229,0.250735,x0.78 (reduce)
-nationality_Mexican,0.247003,1.280183,0.247003,x1.28
-nationality_Argentinian ,-0.171997,0.841982,0.171997,x0.84 (reduce)
-constructorId_207,-0.136119,0.872739,0.136119,x0.87 (reduce)
-nationality_New Zealander,-0.131955,0.876380,0.131955,x0.88 (reduce)
-constructorId_164,0.122297,1.130089,0.122297,x1.13
-constructorId_209,-0.118312,0.888419,0.118312,x0.89 (reduce)
-nationality_American,-0.102119,0.902922,0.102119,x0.90 (reduce)
-milliseconds_pit_stop,0.095355,1.100050,0.095355,x1.10
-fastestLapSpeed,0.078869,1.082063,0.078869,x1.08
-nationality_Indonesian,0.076765,1.079789,0.076765,x1.08
-constructorId_206,-0.066444,0.935715,0.066444,x0.94 (reduce)
-nationality_Indian,0.051614,1.052969,0.051614,x1.05
-nationality_Swedish,0.041921,1.042812,0.041921,x1.04
-constructorId_205,0.040513,1.041345,0.040513,x1.04
-constructorId_166,0.040236,1.041056,0.040236,x1.04
-milliseconds_lap_time,0.024633,1.024939,0.024633,x1.02
-nationality_Swiss,0.008834,1.008873,0.008834,x1.01
+grid,-2.532187,0.079485,2.532187,x0.08 (reduce)
+constructorId_15,-0.800246,0.449218,0.800246,x0.45 (reduce)
+constructorId_7,-0.703272,0.494963,0.703272,x0.49 (reduce)
+constructorId_21,-0.670808,0.511295,0.670808,x0.51 (reduce)
+nationality_Japanese,-0.644240,0.525062,0.644240,x0.53 (reduce)
+constructorId_1,0.626283,1.870645,0.626283,x1.87
+constructorId_16,-0.621973,0.536884,0.621973,x0.54 (reduce)
+constructorId_6,0.573097,1.773751,0.573097,x1.77
+constructorId_63,-0.529411,0.588952,0.529411,x0.59 (reduce)
+constructorId_26,-0.489645,0.612844,0.489645,x0.61 (reduce)
+constructorId_128,-0.465795,0.627636,0.465795,x0.63 (reduce)
+constructorId_154,-0.442930,0.642152,0.442930,x0.64 (reduce)
+constructorId_10,-0.441692,0.642948,0.441692,x0.64 (reduce)
+constructorId_19,-0.436854,0.646066,0.436854,x0.65 (reduce)
+constructorId_3,0.421849,1.524779,0.421849,x1.52
+constructorId_32,0.406467,1.501504,0.406467,x1.50
+constructorId_82,-0.401924,0.669032,0.401924,x0.67 (reduce)
+constructorId_20,-0.396532,0.672649,0.396532,x0.67 (reduce)
+constructorId_54,-0.390951,0.676413,0.390951,x0.68 (reduce)
+constructorId_25,0.378037,1.459416,0.378037,x1.46
+constructorId_53,-0.344884,0.708302,0.344884,x0.71 (reduce)
+constructorId_125,-0.337643,0.713450,0.337643,x0.71 (reduce)
+constructorId_18,-0.328415,0.720064,0.328415,x0.72 (reduce)
+nationality_Dutch,-0.328244,0.720188,0.328244,x0.72 (reduce)
+constructorId_56,-0.327822,0.720491,0.327822,x0.72 (reduce)
+constructorId_204,-0.326415,0.721506,0.326415,x0.72 (reduce)
+constructorId_29,-0.304887,0.737206,0.304887,x0.74 (reduce)
+year,-0.303869,0.737958,0.303869,x0.74 (reduce)
+nationality_German,0.285020,1.329789,0.285020,x1.33
+constructorId_22,0.285008,1.329772,0.285008,x1.33
+constructorId_27,0.283834,1.328212,0.283834,x1.33
+constructorId_57,-0.281139,0.754923,0.281139,x0.75 (reduce)
+constructorId_4,0.277754,1.320161,0.277754,x1.32
+constructorId_35,-0.276862,0.758159,0.276862,x0.76 (reduce)
+constructorId_33,-0.276612,0.758349,0.276612,x0.76 (reduce)
+constructorId_202,-0.273133,0.760991,0.273133,x0.76 (reduce)
+constructorId_113,0.269676,1.309540,0.269676,x1.31
+constructorId_34,0.258006,1.294347,0.258006,x1.29
+constructorId_9,0.249135,1.282916,0.249135,x1.28
+nationality_Irish,-0.246328,0.781666,0.246328,x0.78 (reduce)
+constructorId_200,-0.243597,0.783803,0.243597,x0.78 (reduce)
+nationality_Spanish,0.227968,1.256046,0.227968,x1.26
+constructorId_172,0.225098,1.252446,0.225098,x1.25
+nationality_Russian,-0.223597,0.799637,0.223597,x0.80 (reduce)
+nationality_Danish,-0.218299,0.803885,0.218299,x0.80 (reduce)
+constructorId_133,-0.216816,0.805078,0.216816,x0.81 (reduce)
+age,0.215565,1.240563,0.215565,x1.24
+constructorId_80,-0.200189,0.818576,0.200189,x0.82 (reduce)
+constructorId_58,0.195771,1.216248,0.195771,x1.22
+constructorId_170,0.193713,1.213748,0.193713,x1.21
+constructorId_110,-0.192261,0.825091,0.192261,x0.83 (reduce)
+constructorId_132,-0.190061,0.826909,0.190061,x0.83 (reduce)
+constructorId_41,-0.183499,0.832352,0.183499,x0.83 (reduce)
+nationality_British,0.181152,1.198598,0.181152,x1.20
+constructorId_141,-0.180784,0.834615,0.180784,x0.83 (reduce)
+constructorId_144,-0.180523,0.834833,0.180523,x0.83 (reduce)
+nationality_Rhodesian,-0.177254,0.837567,0.177254,x0.84 (reduce)
+constructorId_66,0.175988,1.192424,0.175988,x1.19
+constructorId_59,0.173873,1.189905,0.173873,x1.19
+constructorId_117,-0.171165,0.842682,0.171165,x0.84 (reduce)
+constructorId_195,-0.167556,0.845729,0.167556,x0.85 (reduce)
+constructorId_11,0.165755,1.180284,0.165755,x1.18
+constructorId_37,0.163699,1.177860,0.163699,x1.18
+constructorId_108,0.160842,1.174499,0.160842,x1.17
+constructorId_194,-0.157736,0.854075,0.157736,x0.85 (reduce)
+nationality_Thai,-0.156954,0.854744,0.156954,x0.85 (reduce)
+constructorId_24,0.156347,1.169232,0.156347,x1.17
+constructorId_94,-0.156102,0.855472,0.156102,x0.86 (reduce)
+constructorId_181,-0.154393,0.856935,0.154393,x0.86 (reduce)
+nationality_Italian,-0.150643,0.860154,0.150643,x0.86 (reduce)
+constructorId_73,-0.149569,0.861079,0.149569,x0.86 (reduce)
+constructorId_129,-0.148570,0.861939,0.148570,x0.86 (reduce)
+constructorId_189,-0.141849,0.867752,0.141849,x0.87 (reduce)
+constructorId_51,0.141712,1.152245,0.141712,x1.15
+constructorId_180,0.140986,1.151408,0.140986,x1.15
+constructorId_75,-0.140482,0.868940,0.140482,x0.87 (reduce)
+nationality_American,-0.139739,0.869585,0.139739,x0.87 (reduce)
+constructorId_187,0.137726,1.147662,0.137726,x1.15
+constructorId_150,-0.137573,0.871470,0.137573,x0.87 (reduce)
+constructorId_114,0.134732,1.144230,0.134732,x1.14
+nationality_Brazilian,0.130169,1.139021,0.130169,x1.14
+constructorId_151,-0.122851,0.884395,0.122851,x0.88 (reduce)
+nationality_Monegasque,-0.122327,0.884859,0.122327,x0.88 (reduce)
+constructorId_196,0.121321,1.128987,0.121321,x1.13
+constructorId_191,0.117638,1.124837,0.117638,x1.12
+constructorId_87,0.117557,1.124746,0.117557,x1.12
+constructorId_23,0.113674,1.120387,0.113674,x1.12
+constructorId_116,-0.111069,0.894877,0.111069,x0.89 (reduce)
+constructorId_171,-0.110725,0.895185,0.110725,x0.90 (reduce)
+nationality_Swiss,-0.110265,0.895597,0.110265,x0.90 (reduce)
+constructorId_95,0.107520,1.113513,0.107520,x1.11
+constructorId_118,0.104458,1.110108,0.104458,x1.11
+constructorId_17,0.101558,1.106894,0.101558,x1.11
+constructorId_147,-0.099042,0.905705,0.099042,x0.91 (reduce)
+constructorId_107,0.097282,1.102171,0.097282,x1.10
+constructorId_5,0.095476,1.100182,0.095476,x1.10
+constructorId_148,-0.095172,0.909216,0.095172,x0.91 (reduce)
+constructorId_138,-0.094384,0.909933,0.094384,x0.91 (reduce)
+constructorId_101,-0.087985,0.915774,0.087985,x0.92 (reduce)
+constructorId_86,-0.087095,0.916590,0.087095,x0.92 (reduce)
+constructorId_45,-0.086966,0.916708,0.086966,x0.92 (reduce)
+nationality_Argentine,0.086850,1.090733,0.086850,x1.09
+constructorId_109,-0.086516,0.917121,0.086516,x0.92 (reduce)
+constructorId_111,-0.085807,0.917771,0.085807,x0.92 (reduce)
+nationality_Canadian,0.083711,1.087315,0.083711,x1.09
+nationality_Finnish,0.079621,1.082876,0.079621,x1.08
+constructorId_49,-0.079063,0.923982,0.079063,x0.92 (reduce)
+constructorId_39,-0.074154,0.928529,0.074154,x0.93 (reduce)
+constructorId_127,-0.073253,0.929366,0.073253,x0.93 (reduce)
+constructorId_167,0.068257,1.070641,0.068257,x1.07
+constructorId_182,0.067395,1.069718,0.067395,x1.07
+constructorId_126,-0.067103,0.935099,0.067103,x0.94 (reduce)
+constructorId_208,0.065476,1.067667,0.065476,x1.07
+constructorId_67,0.065041,1.067203,0.065041,x1.07
+constructorId_183,0.064276,1.066386,0.064276,x1.07
+constructorId_64,0.063836,1.065917,0.063836,x1.07
+nationality_Polish,0.061136,1.063043,0.061136,x1.06
+nationality_Mexican,0.058280,1.060012,0.058280,x1.06
+constructorId_48,-0.056055,0.945488,0.056055,x0.95 (reduce)
+constructorId_119,-0.054775,0.946698,0.054775,x0.95 (reduce)
+nationality_Portuguese,-0.051299,0.949994,0.051299,x0.95 (reduce)
+constructorId_190,0.050382,1.051673,0.050382,x1.05
+constructorId_30,0.049170,1.050399,0.049170,x1.05
+constructorId_8,-0.048575,0.952586,0.048575,x0.95 (reduce)
+constructorId_46,-0.047945,0.953186,0.047945,x0.95 (reduce)
+constructorId_176,0.047224,1.048357,0.047224,x1.05
+nationality_Argentine-Italian,-0.045754,0.955277,0.045754,x0.96 (reduce)
+constructorId_136,-0.045161,0.955843,0.045161,x0.96 (reduce)
+constructorId_131,0.045141,1.046175,0.045141,x1.05
+constructorId_105,0.044700,1.045714,0.044700,x1.05
+raceId,-0.044599,0.956381,0.044599,x0.96 (reduce)
+nationality_French,0.044489,1.045493,0.044489,x1.05
+nationality_American-Italian,-0.043107,0.957809,0.043107,x0.96 (reduce)
+nationality_Chilean,0.039705,1.040504,0.039705,x1.04
+constructorId_31,0.038874,1.039640,0.038874,x1.04
+constructorId_198,-0.038647,0.962091,0.038647,x0.96 (reduce)
+nationality_South African,0.038416,1.039163,0.038416,x1.04
+constructorId_89,-0.037840,0.962867,0.037840,x0.96 (reduce)
+nationality_Australian,0.035999,1.036654,0.035999,x1.04
+nationality_Austrian,0.033598,1.034169,0.033598,x1.03
+constructorId_72,-0.032515,0.968008,0.032515,x0.97 (reduce)
+nationality_Uruguayan,-0.032512,0.968011,0.032512,x0.97 (reduce)
+constructorId_81,-0.032346,0.968171,0.032346,x0.97 (reduce)
+constructorId_199,-0.032232,0.968282,0.032232,x0.97 (reduce)
+constructorId_55,-0.032034,0.968474,0.032034,x0.97 (reduce)
+constructorId_203,-0.030554,0.969908,0.030554,x0.97 (reduce)
+constructorId_50,-0.030263,0.970190,0.030263,x0.97 (reduce)
+constructorId_152,-0.029531,0.970901,0.029531,x0.97 (reduce)
+constructorId_36,-0.028947,0.971468,0.028947,x0.97 (reduce)
+constructorId_169,-0.028275,0.972121,0.028275,x0.97 (reduce)
+nationality_Malaysian,0.028175,1.028576,0.028175,x1.03
+constructorId_2,-0.027909,0.972477,0.027909,x0.97 (reduce)
+constructorId_135,-0.027703,0.972677,0.027703,x0.97 (reduce)
+constructorId_134,0.027284,1.027660,0.027284,x1.03
+constructorId_139,-0.026345,0.973999,0.026345,x0.97 (reduce)
+constructorId_13,-0.024587,0.975713,0.024587,x0.98 (reduce)
+constructorId_149,-0.023916,0.976368,0.023916,x0.98 (reduce)
+constructorId_28,0.023835,1.024121,0.023835,x1.02
+constructorId_205,-0.023674,0.976604,0.023674,x0.98 (reduce)
+constructorId_188,-0.023180,0.977087,0.023180,x0.98 (reduce)
+constructorId_70,-0.023110,0.977155,0.023110,x0.98 (reduce)
+nationality_Swedish,0.022527,1.022783,0.022527,x1.02
+constructorId_115,-0.020163,0.980039,0.020163,x0.98 (reduce)
+constructorId_104,-0.020131,0.980070,0.020131,x0.98 (reduce)
+constructorId_178,-0.019946,0.980251,0.019946,x0.98 (reduce)
+nationality_Indian,-0.019217,0.980966,0.019217,x0.98 (reduce)
+constructorId_164,0.019149,1.019333,0.019149,x1.02
+constructorId_174,0.018881,1.019061,0.018881,x1.02
+constructorId_60,0.018830,1.019008,0.018830,x1.02
+constructorId_161,-0.018700,0.981474,0.018700,x0.98 (reduce)
+nationality_Belgian,-0.018592,0.981579,0.018592,x0.98 (reduce)
+nationality_Czech,0.018198,1.018364,0.018198,x1.02
+constructorId_155,0.018055,1.018219,0.018055,x1.02
+nationality_Venezuelan,0.017823,1.017983,0.017823,x1.02
+constructorId_143,0.017417,1.017570,0.017417,x1.02
+constructorId_120,0.017405,1.017557,0.017405,x1.02
+constructorId_52,-0.017118,0.983027,0.017118,x0.98 (reduce)
+constructorId_173,0.016851,1.016994,0.016851,x1.02
+constructorId_92,-0.016626,0.983512,0.016626,x0.98 (reduce)
+constructorId_156,-0.016446,0.983688,0.016446,x0.98 (reduce)
+constructorId_157,0.016395,1.016530,0.016395,x1.02
+constructorId_197,-0.016167,0.983963,0.016167,x0.98 (reduce)
+constructorId_121,0.015436,1.015556,0.015436,x1.02
+constructorId_122,0.014972,1.015085,0.014972,x1.02
+constructorId_102,-0.014820,0.985290,0.014820,x0.99 (reduce)
+constructorId_159,0.014772,1.014882,0.014772,x1.01
+round,0.014052,1.014151,0.014052,x1.01
+constructorId_124,-0.013893,0.986203,0.013893,x0.99 (reduce)
+constructorId_160,0.013624,1.013717,0.013624,x1.01
+constructorId_130,-0.013617,0.986476,0.013617,x0.99 (reduce)
+constructorId_99,-0.013497,0.986594,0.013497,x0.99 (reduce)
+constructorId_97,-0.013383,0.986706,0.013383,x0.99 (reduce)
+constructorId_106,-0.013189,0.986898,0.013189,x0.99 (reduce)
+constructorId_140,-0.013124,0.986962,0.013124,x0.99 (reduce)
+constructorId_85,0.012836,1.012919,0.012836,x1.01
+constructorId_158,0.012626,1.012706,0.012626,x1.01
+constructorId_91,-0.011625,0.988442,0.011625,x0.99 (reduce)
+constructorId_201,-0.011193,0.988870,0.011193,x0.99 (reduce)
+constructorId_76,0.010466,1.010521,0.010466,x1.01
+constructorId_40,0.010455,1.010510,0.010455,x1.01
+nationality_Hungarian,0.010356,1.010410,0.010356,x1.01
+constructorId_68,-0.010037,0.990013,0.010037,x0.99 (reduce)
+constructorId_83,0.009877,1.009926,0.009877,x1.01
+constructorId_100,0.009413,1.009457,0.009413,x1.01
+constructorId_166,-0.009300,0.990743,0.009300,x0.99 (reduce)
+nationality_Colombian,-0.008983,0.991058,0.008983,x0.99 (reduce)
+constructorId_84,0.008598,1.008635,0.008598,x1.01
+constructorId_98,-0.007958,0.992074,0.007958,x0.99 (reduce)
+constructorId_38,0.007891,1.007923,0.007891,x1.01
+constructorId_96,-0.007285,0.992741,0.007285,x0.99 (reduce)
+constructorId_192,-0.006855,0.993169,0.006855,x0.99 (reduce)
+constructorId_185,0.006808,1.006831,0.006808,x1.01
+constructorId_184,-0.005977,0.994041,0.005977,x0.99 (reduce)
+constructorId_145,0.005851,1.005868,0.005851,x1.01
+constructorId_207,-0.005698,0.994318,0.005698,x0.99 (reduce)
+nationality_East German,0.005283,1.005297,0.005283,x1.01
+constructorId_206,-0.005186,0.994827,0.005186,x0.99 (reduce)
+constructorId_12,0.004772,1.004783,0.004772,x1.00
+constructorId_175,0.004644,1.004655,0.004644,x1.00
+constructorId_112,0.004049,1.004057,0.004049,x1.00
+constructorId_142,0.003914,1.003921,0.003914,x1.00
+constructorId_146,-0.003896,0.996111,0.003896,x1.00 (reduce)
+constructorId_193,0.003777,1.003784,0.003777,x1.00
+nationality_New Zealander,0.003775,1.003782,0.003775,x1.00
+constructorId_65,-0.003191,0.996814,0.003191,x1.00 (reduce)
+constructorId_79,-0.003151,0.996854,0.003151,x1.00 (reduce)
+constructorId_44,-0.003147,0.996858,0.003147,x1.00 (reduce)
+constructorId_62,0.001668,1.001670,0.001668,x1.00
+constructorId_78,0.001644,1.001646,0.001644,x1.00
+constructorId_90,0.001394,1.001394,0.001394,x1.00
+constructorId_14,-0.001010,0.998990,0.001010,x1.00 (reduce)
+constructorId_162,-0.001010,0.998991,0.001010,x1.00 (reduce)
+constructorId_163,0.000947,1.000948,0.000947,x1.00
+constructorId_42,-0.000928,0.999072,0.000928,x1.00 (reduce)
+constructorId_77,-0.000314,0.999686,0.000314,x1.00 (reduce)
+constructorId_168,0.000070,1.000070,0.000070,x1.00
+nationality_Liechtensteiner,0.000030,1.000030,0.000030,x1.00
+nationality_Argentinian ,0.000000,1.000000,0.000000,x1.00
+nationality_Chinese,0.000000,1.000000,0.000000,x1.00
+nationality_Indonesian,0.000000,1.000000,0.000000,x1.00
+constructorId_209,0.000000,1.000000,0.000000,x1.00
+constructorId_210,0.000000,1.000000,0.000000,x1.00
+constructorId_211,0.000000,1.000000,0.000000,x1.00
+constructorId_213,0.000000,1.000000,0.000000,x1.00
+constructorId_214,0.000000,1.000000,0.000000,x1.00
+constructorId_215,0.000000,1.000000,0.000000,x1.00

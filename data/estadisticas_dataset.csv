@@ -1,9 +1,9 @@
 metrica,valor,comentario
-Total observaciones,655189,Número total de observaciones en el dataset
-Total victorias,33253,Casos positivos (piloto ganó)
-Total sin victorias,621936,Casos negativos (piloto no ganó)
-Porcentaje victorias,5.08%,Porcentaje de casos positivos
-Porcentaje sin victorias,94.92%,Porcentaje de casos negativos
-Ratio desbalance,1:0.1,Cantidad de casos negativos por cada positivo
-Features totales,55,Variable predictoras (excluyendo target)
-Instancias por observación (promedio),655189.0,Promedio de valores no-nulos por fila
+Total observaciones,25121,Número total de observaciones en el dataset
+Total victorias,1128,Casos positivos (piloto ganó)
+Total sin victorias,23993,Casos negativos (piloto no ganó)
+Porcentaje victorias,4.49%,Porcentaje de casos positivos
+Porcentaje sin victorias,95.51%,Porcentaje de casos negativos
+Features totales,246,Variables predictoras (excluyendo target)
+Split recomendado,TimeSeriesSplit / corte temporal,Evita mezclar futuro con pasado
+Escalado correcto,"Fit scaler en train, transform en test",Evita fuga de información por preprocesamiento
