@@ -1,0 +1,71 @@
+#!/bin/sh
+
+# ==============================================================================
+# Git Pre-Push Hook: Restrict direct push to 'main'
+# ==============================================================================
+
+PROTECTED_BRANCH="refs/heads/main"
+
+# Get current git user details (lowercased email for case-insensitive matching)
+CURRENT_EMAIL=$(git config user.email 2>/dev/null | tr '[:upper:]' '[:lower:]')
+CURRENT_NAME=$(git config user.name 2>/dev/null)
+
+# Default allowed users (emails or usernames, one per line)
+# Customize or add team leads / admins here:
+DEFAULT_ALLOWED="
+slash-gil@outlook.com
+salvador gil
+"
+
+# Also read any users configured via:
+# git config --add hooks.allowedpushuser "colleague@example.com"
+CONFIG_ALLOWED=$(git config --get-all hooks.allowedpushuser 2>/dev/null | tr '[:upper:]' '[:lower:]')
+
+# Process all refs being pushed from standard input
+while read -r local_ref local_oid remote_ref remote_oid
+do
+    if [ "$remote_ref" = "$PROTECTED_BRANCH" ] || [ "$remote_ref" = "main" ]; then
+        AUTHORIZED=0
+
+        # Check default list
+        for allowed in $DEFAULT_ALLOWED; do
+            allowed_clean=$(echo "$allowed" | tr '[:upper:]' '[:lower:]')
+            if [ -n "$allowed_clean" ]; then
+                if [ "$CURRENT_EMAIL" = "$allowed_clean" ] || [ "$CURRENT_NAME" = "$allowed" ]; then
+                    AUTHORIZED=1
+                    break
+                fi
+            fi
+        done
+
+        # Check git config list if not already authorized
+        if [ $AUTHORIZED -eq 0 ] && [ -n "$CONFIG_ALLOWED" ]; then
+            for allowed in $CONFIG_ALLOWED; do
+                if [ "$CURRENT_EMAIL" = "$allowed" ] || [ "$CURRENT_NAME" = "$allowed" ]; then
+                    AUTHORIZED=1
+                    break
+                fi
+            done
+        fi
+
+        if [ $AUTHORIZED -eq 0 ]; then
+            echo ""
+            echo "===================================================================="
+            echo " [BLOCKED] Direct push to 'main' is restricted!"
+            echo "===================================================================="
+            echo " Current User: ${CURRENT_NAME:-Unknown} <${CURRENT_EMAIL:-no-email}>"
+            echo ""
+            echo " You do not have permission to push directly to 'main'."
+            echo " Please create a feature branch and create a Pull Request on GitHub:"
+            echo ""
+            echo "   git checkout -b feature/your-feature-name"
+            echo "   git push -u origin feature/your-feature-name"
+            echo ""
+            echo "===================================================================="
+            echo ""
+            exit 1
+        fi
+    fi
+done
+
+exit 0

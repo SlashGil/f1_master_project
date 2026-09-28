@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual Environments
+venv/
+env/
+.venv/
+
+# IDE configurations
+.idea/
+*/.idea/
+.vscode/
+
+# Temporary extraction / archives
+temp_extraction/
+__MACOSX/
+*.zip
+*.tar.gz
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Large generated dataset (>100MB exceeds GitHub direct push limits)
+# Regenerable with 'python 1_preparacion_dataset.py'
+data/dataset_tesis_f1.csv

@@ -1,0 +1,56 @@
+variable,coeficiente,odds_ratio,abs_coeficiente,interpretacion_odds
+grid,-2.140035,0.117651,2.140035,x0.12 (reduce)
+nationality_Brazilian,-1.750823,0.173631,1.750823,x0.17 (reduce)
+nationality_Canadian,-1.398072,0.247073,1.398072,x0.25 (reduce)
+constructorId_10,-1.290697,0.275079,1.290697,x0.28 (reduce)
+constructorId_117,-1.249702,0.286590,1.249702,x0.29 (reduce)
+constructorId_210,-1.237591,0.290082,1.237591,x0.29 (reduce)
+constructorId_9,1.235307,3.439434,1.235307,x3.44
+nationality_Russian,-1.162282,0.312772,1.162282,x0.31 (reduce)
+constructorId_5,-1.100986,0.332543,1.100986,x0.33 (reduce)
+constructorId_51,-1.080576,0.339400,1.080576,x0.34 (reduce)
+constructorId_131,1.062634,2.893982,1.062634,x2.89
+nationality_Thai,-1.060510,0.346279,1.060510,x0.35 (reduce)
+nationality_Japanese,-1.043251,0.352307,1.043251,x0.35 (reduce)
+nationality_British,1.014562,2.758154,1.014562,x2.76
+constructorId_6,0.978272,2.659856,0.978272,x2.66
+constructorId_4,-0.966478,0.380421,0.966478,x0.38 (reduce)
+nationality_German,0.797449,2.219871,0.797449,x2.22
+constructorId_15,-0.779203,0.458771,0.779203,x0.46 (reduce)
+constructorId_1,0.776920,2.174764,0.776920,x2.17
+nationality_Danish,-0.750892,0.471945,0.750892,x0.47 (reduce)
+nationality_Dutch,0.703532,2.020878,0.703532,x2.02
+constructorId_214,0.612388,1.844831,0.612388,x1.84
+constructorId_213,0.590510,1.804908,0.590510,x1.80
+nationality_Spanish,0.540635,1.717097,0.540635,x1.72
+constructorId_211,0.492818,1.636922,0.492818,x1.64
+nationality_French,0.479466,1.615212,0.479466,x1.62
+constructorId_208,0.472125,1.603399,0.472125,x1.60
+nationality_Polish,-0.469183,0.625513,0.469183,x0.63 (reduce)
+nationality_Venezuelan,0.438558,1.550470,0.438558,x1.55
+constructorId_3,0.416577,1.516761,0.416577,x1.52
+nationality_Australian,0.403092,1.496445,0.403092,x1.50
+nationality_Belgian,-0.296861,0.743147,0.296861,x0.74 (reduce)
+age,0.273474,1.314524,0.273474,x1.31
+nationality_Finnish,0.272978,1.313871,0.272978,x1.31
+constructorId_215,-0.270785,0.762780,0.270785,x0.76 (reduce)
+nationality_Italian,-0.256436,0.773804,0.256436,x0.77 (reduce)
+nationality_Monegasque,0.254072,1.289264,0.254072,x1.29
+nationality_Chinese,-0.250735,0.778229,0.250735,x0.78 (reduce)
+nationality_Mexican,0.247003,1.280183,0.247003,x1.28
+nationality_Argentinian ,-0.171997,0.841982,0.171997,x0.84 (reduce)
+constructorId_207,-0.136119,0.872739,0.136119,x0.87 (reduce)
+nationality_New Zealander,-0.131955,0.876380,0.131955,x0.88 (reduce)
+constructorId_164,0.122297,1.130089,0.122297,x1.13
+constructorId_209,-0.118312,0.888419,0.118312,x0.89 (reduce)
+nationality_American,-0.102119,0.902922,0.102119,x0.90 (reduce)
+milliseconds_pit_stop,0.095355,1.100050,0.095355,x1.10
+fastestLapSpeed,0.078869,1.082063,0.078869,x1.08
+nationality_Indonesian,0.076765,1.079789,0.076765,x1.08
+constructorId_206,-0.066444,0.935715,0.066444,x0.94 (reduce)
+nationality_Indian,0.051614,1.052969,0.051614,x1.05
+nationality_Swedish,0.041921,1.042812,0.041921,x1.04
+constructorId_205,0.040513,1.041345,0.040513,x1.04
+constructorId_166,0.040236,1.041056,0.040236,x1.04
+milliseconds_lap_time,0.024633,1.024939,0.024633,x1.02
+nationality_Swiss,0.008834,1.008873,0.008834,x1.01

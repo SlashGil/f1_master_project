@@ -1,0 +1,9 @@
+metrica,valor,comentario
+Total observaciones,655189,Número total de observaciones en el dataset
+Total victorias,33253,Casos positivos (piloto ganó)
+Total sin victorias,621936,Casos negativos (piloto no ganó)
+Porcentaje victorias,5.08%,Porcentaje de casos positivos
+Porcentaje sin victorias,94.92%,Porcentaje de casos negativos
+Ratio desbalance,1:0.1,Cantidad de casos negativos por cada positivo
+Features totales,55,Variable predictoras (excluyendo target)
+Instancias por observación (promedio),655189.0,Promedio de valores no-nulos por fila

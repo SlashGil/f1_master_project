@@ -1,0 +1,7 @@
+# Set default behavior to automatically handle line endings
+* text=auto
+
+# Keep LF line endings for shell scripts and git hooks (prevents \r errors on Windows/Linux)
+*.sh text eol=lf
+.githooks/* text eol=lf
+.git/hooks/* text eol=lf
