@@ -188,8 +188,7 @@ class TestTemporalIntegrity(unittest.TestCase):
             "1_regresion_lineal.py",
             "2_random_forest.py",
             "3_perceptron_multicapa.py",
-            "4_regresion_logistica.py",
-            "5_modelo_avanzado.py"
+            "4_regresion_logistica.py"
         ]
 
         print(f"\n  [OK] Verificando exclusión de 'raceId' en scripts de modelado:")

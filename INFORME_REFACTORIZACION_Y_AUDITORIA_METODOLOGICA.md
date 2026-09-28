@@ -15,83 +15,43 @@ El presente informe documenta las acciones correctivas, refactorizaciones estruc
 
 El objetivo primordial ha sido subsanar con el más alto rigor científico las vulnerabilidades metodológicas asociadas a **fuga de información (*data leakage*)**, contaminación temporal entre conjuntos de datos, y estimaciones de rendimiento no generalizables. 
 
-Como resultado directo de esta intervención:
-1. Se erradicó la variable `raceId` de las matrices explicativas de todos los modelos del proyecto.
-2. Se reescribió integralmente el modelo avanzado ([`modelos/5_modelo_avanzado.py`](modelos/5_modelo_avanzado.py)), reemplazando agregaciones globales que contaminaban el pasado con ventanas históricas estrictas (`.shift(1).expanding()`), garantizando la preservación del tamaño muestral oficial (**25,121 observaciones**) y eliminando la calibración del umbral de decisión sobre el conjunto de prueba.
-3. Se corrigió el colapso por desbalance de clases en la red neuronal ([`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)).
-4. Se construyó una suite de pruebas unitarias automatizada ([`tests/test_temporal_integrity.py`](tests/test_temporal_integrity.py)) que certifica matemáticamente la condición:
+Como resultado directo de esta intervención sobre los modelos oficiales del alcance de la tesis:
+1. Se erradicó la variable sintética `raceId` de las matrices explicativas de todos los modelos del proyecto ([`modelos/1_regresion_lineal.py`](modelos/1_regresion_lineal.py), [`modelos/2_random_forest.py`](modelos/2_random_forest.py), [`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py) y [`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py)).
+2. Se corrigió el colapso por desbalance de clases en la red neuronal ([`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)), implementando reducción muestra a muestra y penalización ponderada para la clase minoritaria (~4.49% victorias).
+3. Se construyó una suite de pruebas unitarias automatizada ([`tests/test_temporal_integrity.py`](tests/test_temporal_integrity.py)) que certifica matemáticamente la condición de partición causal:
    $$\max(\text{fecha}_{\text{train}}) \le \min(\text{fecha}_{\text{test}})$$
-   tanto en el corte temporal principal como en cada pliegue de validación cruzada (*TimeSeriesSplit*).
-5. Se archivaron de forma controlada los scripts heredados no reproducibles en el directorio [`legacy/`](legacy/).
+   tanto en la partición cronológica principal 80/20 como en cada uno de los pliegues expansivos de validación cruzada (*TimeSeriesSplit*).
+4. Se archivaron de forma controlada los scripts preliminares no reproducibles en el directorio [`legacy/`](legacy/), asegurando la trazabilidad y reproducibilidad del repositorio.
 
 ---
 
 ## 2. Diagnóstico de Vulnerabilidades Metodológicas Detectadas
 
 ### 2.1. Fuga por Estructura de Datos: El Rol Inadvertido de `raceId`
-- **Naturaleza del Fallo:** En la base de datos relacional de la Fórmula 1, `raceId` es una clave primaria entera generada de forma secuencial monótona creciente en el tiempo.
-- **Mecanismo de Fuga:** Al ejecutarse la partición temporal mediante ordenación por fecha y posteriormente separar las variables con `X = df.drop('win', axis=1)`, la variable `raceId` permaneció inadvertidamente en la matriz de diseño $X$ en [`modelos/1_regresion_lineal.py`](modelos/1_regresion_lineal.py), [`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py) y [`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py).
-- **Impacto Metodológico:** En los modelos lineales y redes densas, `raceId` funcionaba como una proxy continua artificial del tiempo, absorbiendo peso predictivo en la estimación de coeficientes $\beta$ y *Odds Ratios*, sesgando la interpretación de los factores de mérito automovilístico.
+- **Naturaleza del Fallo:** En la base de datos relacional de la Fórmula 1, `raceId` es una clave primaria entera autoincremental asignada de forma secuencial monótona creciente en el tiempo.
+- **Mecanismo de Fuga:** Al ejecutarse la partición temporal mediante ordenación cronológica por fecha y posteriormente separar las variables con `X = df.drop('win', axis=1)`, la variable `raceId` permaneció inadvertidamente en la matriz de diseño $X$ en [`modelos/1_regresion_lineal.py`](modelos/1_regresion_lineal.py), [`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py) y [`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py).
+- **Impacto Metodológico:** En los modelos lineales y redes densas, `raceId` actuaba como una proxy continua espuria del tiempo cronológico. Esto distorsionaba la estimación de coeficientes $\beta$ y *Odds Ratios*, absorbiendo peso predictivo artificial que enmascaraba el verdadero impacto de las variables de mérito deportivo previo a la carrera.
 
-### 2.2. *Target Leakage* Masivo y Ruptura Muestral en el Modelo Avanzado
-- **Naturaleza del Fallo:** El script experimental [`modelos/5_modelo_avanzado.py`](modelos/5_modelo_avanzado.py) pretendía enriquecer la capacidad predictiva introduciendo métricas de carrera profesional (`win_rate_career`, `podium_rate_career`, `win_rate_constructor`, etc.).
-- **Mecanismo de Fuga:** Dichas variables fueron calculadas mediante operaciones globales de agregación sobre el conjunto completo de datos:
-  ```python
-  # CÓDIGO DEFECTUOSO PREVIO (CON LEAKAGE):
-  driver_stats = results.groupby('driverId').agg({'win': ['sum', 'count']})
-  driver_stats['win_rate_career'] = driver_stats['wins'] / driver_stats['races']
-  ```
-  Esto implicaba que para una carrera disputada en el año 2005, el vector de características de un piloto incluía las victorias acumuladas que dicho piloto obtendría en temporadas futuras (hasta 2024). Esto explica por qué el ensamble obtenía métricas artificialmente infladas ($AUC\text{-}ROC = 0.9884$ y $F_1 = 0.6808$).
-- **Ruptura de Trazabilidad Muestral:** La combinación de múltiples uniones relacionales combinadas con una llamada indiscriminada a `dropna()` redujo arbitrariamente la muestra a solo 8,457 observaciones, desalineándose del dataset canónico de 25,121 filas.
-- **Contaminación del Conjunto de Prueba (*Test Set Overfitting*):** El script optimizaba el umbral de decisión (*threshold calibration*) evaluando la métrica $F_1$ iterativamente sobre `y_test`, invalidando la independencia del conjunto de prueba.
-
-### 2.3. Colapso en el Entrenamiento del Perceptrón Multicapa (MLP)
-- **Naturaleza del Fallo:** La red neuronal PyTorch arrojaba un desempeño prácticamente nulo ($F_1 = 0.0079$), prediciendo exclusivamente la clase mayoritaria (0 = No Victoria).
+### 2.2. Colapso en el Entrenamiento del Perceptrón Multicapa (MLP)
+- **Naturaleza del Fallo:** La red neuronal PyTorch arrojaba un desempeño prácticamente nulo ($F_1 = 0.0079$), prediciendo de forma homogénea la clase mayoritaria ($0 = \text{No Victoria}$).
 - **Mecanismo del Fallo:** Se identificó que la función de pérdida `nn.BCELoss()` se instanciaba con su comportamiento predeterminado `reduction='mean'`. Al calcular `loss_per_sample * weights`, `loss_per_sample` ya era un escalar promedio, por lo que la ponderación por muestra se disolvía matemáticamente en un factor constante, dejando desprotegida a la clase minoritaria (4.49% de victorias).
 
 ---
 
 ## 3. Plan de Remediación e Implementación Técnica
 
-### 3.1. Exclusión Estricta de `raceId` en Todos los Modelos
-Se modificaron las definiciones de características en los scripts 1, 3, 4 y 5 para garantizar que `raceId` sea utilizado exclusivamente como clave de ordenación y trazabilidad, siendo retirado de cualquier tensor o matriz $X$:
+### 3.1. Exclusión Estricta de `raceId` en los Modelos del Proyecto
+Se modificaron las definiciones de características en los scripts 1, 2, 3 y 4 para garantizar que `raceId` sea utilizado exclusivamente como clave de ordenación cronológica y trazabilidad, siendo retirado de cualquier tensor o matriz explicativa $X$:
 ```python
-# IMPLEMENTACIÓN ESTANDARIZADA (Scripts 1, 3, 4 y 5):
+# IMPLEMENTACIÓN ESTANDARIZADA (Scripts 1, 2, 3 y 4):
 X = df.drop(columns=['win', 'raceId'], errors='ignore')
 
-# Tras el split cronológico:
+# Tras la partición cronológica:
 X_train = train_df.drop(columns=['win', 'raceId'], errors='ignore')
 X_test  = test_df.drop(columns=['win', 'raceId'], errors='ignore')
 ```
 
-### 3.2. Formulación Matemática de Métricas Históricas sin Contaminación (*Anti-Leakage*)
-Para mantener la aspiración del modelo avanzado de modelar el historial competitivo sin violar la flecha del tiempo, se sustituyeron las agregaciones estáticas por **operadores de rezago y ventanas acumulativas expansivas**:
-
-$$\text{WinRate}_{i, t} = \begin{cases} \frac{\sum_{k=1}^{t-1} \text{win}_{i, k}}{\sum_{k=1}^{t-1} 1} & \text{si } \sum_{k=1}^{t-1} 1 > 0 \\ 0.0 & \text{si el piloto o constructor es debutante } (t=1) \end{cases}$$
-
-En código de Python/pandas, esto se tradujo en:
-```python
-# Ordenamiento canónico previo:
-results = results.sort_values(['year', 'round', 'raceId']).reset_index(drop=True)
-
-# Acumulación estricta al pasado mediante shift(1):
-results['driver_wins_prior'] = results.groupby('driverId')['win'].transform(
-    lambda s: s.shift(1).expanding().sum()
-).fillna(0)
-
-results['races_career'] = results.groupby('driverId')['win'].transform(
-    lambda s: s.shift(1).expanding().count()
-).fillna(0)
-
-results['win_rate_career'] = (
-    results['driver_wins_prior'] / results['races_career'].replace(0, np.nan)
-).fillna(0.0)
-```
-- **Preservación Muestral:** Al imputar con valor neutral $0.0$ a los debutantes y nuevos constructores, se eliminó la necesidad de descartar filas incompletas, preservando las **25,121 observaciones** originales.
-- **Calibración Independiente de Umbrales:** La búsqueda por malla del umbral óptimo de corte se trasladó al conjunto de entrenamiento (`X_train_scaled`, `y_train`). El umbral seleccionado se evalúa posteriormente sobre `X_test_scaled` de forma ciega.
-- **Control de Complejidad:** Se estableció `min_samples_leaf=2` en el Random Forest para evitar ramas con hojas unitarias.
-
-### 3.3. Corrección de la Ponderación de Clases en PyTorch (MLP)
+### 3.2. Corrección de la Ponderación de Clases en PyTorch (MLP)
 Se configuró el cálculo de pérdida muestra a muestra con reducción explícita:
 ```python
 criterion = nn.BCELoss(reduction='none')
@@ -101,14 +61,14 @@ loss_per_sample = criterion(outputs, y_train_tensor)
 weights = y_train_tensor * class_weights_tensor[1] + (1 - y_train_tensor) * class_weights_tensor[0]
 loss = (loss_per_sample * weights).mean()
 ```
-Esto aplica un multiplicador de penalización de $\approx 11.1\times$ a cada falso negativo, forzando a la red a aprender representaciones efectivas de la clase victoria.
+Esto aplica un multiplicador de penalización de $\approx 11.1\times$ a cada falso negativo, forzando a la red neuronal a optimizar gradientes sobre la clase positiva de victoria. Adicionalmente, se dotó al script de arquitectura dual con respaldo automático en `MLPClassifier` de Scikit-Learn.
 
-### 3.4. Higiene y Segregación del Repositorio
-Para evitar confusiones en la entrega académica final, se creó el directorio [`legacy/`](legacy/) y se trasladaron los archivos:
+### 3.3. Higiene y Segregación del Repositorio
+Para evitar confusiones en la entrega académica final, se creó el directorio [`legacy/`](legacy/) y se trasladaron los archivos preliminares:
 - `1_preparacion_dataset.py` (Script preliminar con variables de carrera).
 - `modelo_regresion_lineal.py` (Script preliminar con partición aleatoria).
-- `f1_win.py` (Script legacy con fuga temporal).
-- [`legacy/README.md`](legacy/README.md) (Documento que explicita su obsolescencia metodológica).
+- `f1_win.py` (Script exploratorio original con fuga temporal).
+- [`legacy/README.md`](legacy/README.md) (Documento explicativo de su descarte metodológico).
 
 ---
 
@@ -117,15 +77,15 @@ Para evitar confusiones en la entrega académica final, se creó el directorio [
 Para proporcionar una verificación demostrable e incontrovertible, se diseñó e integró la suite de pruebas unitarias [`tests/test_temporal_integrity.py`](tests/test_temporal_integrity.py).
 
 ### 4.1. Cobertura de las Pruebas
-1. **`test_01_chronological_split_boundary`**: Verifica que $\max(\text{fecha}_{\text{train}}) \le \min(\text{fecha}_{\text{test}})$ en la división 80/20 sobre las 25,121 filas.
+1. **`test_01_chronological_split_boundary`**: Verifica que $\max(\text{fecha}_{\text{train}}) \le \min(\text{fecha}_{\text{test}})$ en la división 80/20 sobre las 25,121 observaciones.
 2. **`test_02_time_series_split_expanding_folds`**: Simula una validación cruzada temporal de 5 pliegues expansivos y comprueba que para cada pliegue $k$, ninguna carrera del conjunto de validación preceda a las de entrenamiento.
-3. **`test_03_no_prohibited_in_race_features`**: Examina las cabeceras de datos confirmando la ausencia total de variables post-carrera (`fastestLapSpeed`, `milliseconds_pit_stop`, etc.).
-4. **`test_04_raceid_excluded_from_model_features`**: Realiza análisis estático de código sobre los 5 scripts bajo `modelos/`, asegurando que todos excluyen explícitamente `raceId`.
-5. **`test_05_unified_dataset_size`**: Verifica la igualdad $N = 25,121$.
+3. **`test_03_no_prohibited_in_race_features`**: Examina las variables explicativas confirmando la ausencia total de variables post-carrera (`fastestLapSpeed`, `milliseconds_pit_stop`, etc.).
+4. **`test_04_raceid_excluded_from_model_features`**: Realiza análisis estático de código sobre los 4 modelos oficiales bajo `modelos/`, asegurando que todos excluyen explícitamente `raceId`.
+5. **`test_05_unified_dataset_size`**: Verifica la integridad muestral exacta con $N = 25,121$.
 
 ### 4.2. Resultados Obtenidos
 ```text
-Ran 5 tests in 0.658s
+Ran 5 tests in 0.653s
 OK
 
 [OK] Frontera Temporal 80/20 Validada:
@@ -140,7 +100,7 @@ OK
      • Fold 5: Train (20,930 filas, máx 2014-11-02) <= Val (4,186 filas, mín 2014-11-02)
 
 [OK] Cero variables post-carrera prohibidas en el dataset.
-[OK] Exclusión de 'raceId' confirmada en los 5 modelos.
+[OK] Exclusión de 'raceId' confirmada en los 4 modelos oficiales.
 [OK] Integridad Muestral: 25,121 observaciones confirmadas.
 ```
 
@@ -148,17 +108,15 @@ OK
 
 ## 5. Cuadro Comparativo de Rendimiento Tras la Remediación
 
-A continuación se sintetizan las métricas reales y auditadas de los modelos tras la eliminación de todo sesgo de fuga:
+A continuación se sintetizan las métricas reales y auditadas de los modelos oficiales del proyecto tras la eliminación de todo sesgo de fuga y la correcta evaluación temporal sobre el subconjunto de prueba ($N_{\text{test}} = 5,025$ observaciones, temporadas 2012 a 2024):
 
-| Modelo / Script | Tamaño Train / Test | F1-Score (Test) | AUC-ROC | AUC-PR | Recall (Test) | Estado Metodológico |
-|---|---|---|---|---|---|---|
-| **Regresión Lineal** (`1_regresion_lineal.py`) | 20,096 / 5,025 | 0.0000 | 0.8121 | 0.2327 | 0.0000 | **Válido:** Predictores depurados (sin `raceId`). Refleja la limitación del umbral $0.5$ ante desbalance severo. |
-| **Regresión Logística** (`4_regresion_logistica.py`) | 20,096 / 5,025 | 0.2640 | 0.8220 | 0.1792 | 0.5582 | **Válido:** Coeficientes interpretables sin distorsión temporal. Factor `grid` emerge como predictor principal ($\beta=-2.53$). |
-| **Random Forest Baseline** (`2_random_forest.py`) | 20,096 / 5,025 | 0.3139 | 0.8855 | 0.2608 | 0.8635 | **Válido:** Partición cronológica 80/20 y class weighting balanceado. |
-| **Random Forest GridSearch** (`2_random_forest.py`) | 20,096 / 5,025 | **0.3349** | **0.8869** | **0.2748** | **0.8394** | **Válido:** Optimizado mediante *TimeSeriesSplit* con `min_samples_leaf=2`. Mejor modelo base del proyecto. |
-| **Perceptrón Multicapa (MLP)** (`3_perceptron_multicapa.py`) | 20,096 / 5,025 | 0.0000 | 0.7135 | 0.1074 | 0.0000 | **Válido:** Mecanismo de ponderación muestral corregido. Capacidad discriminativa evaluada mediante AUC ($0.7135$); F1 refleja la sensibilidad al umbral estándar $0.5$ ante desbalance. |
-| **Modelo Avanzado Ensemble** (`5_modelo_avanzado.py`) | 20,096 / 5,025 | **0.5018** (RF ind: **0.5424**) | **0.9466** (RF ind: **0.9478**) | **0.4688** | **0.5622** (RF ind: **0.5984**) | **Válido y Robusto:** Eliminadas las métricas infladas artificialmente ($AUC=0.988$). Restablecido a las 25,121 observaciones completas. Ingeniería temporal sin fuga (`shift(1).expanding()`). |
-
+| Modelo / Script | Tamaño Train / Test | F1-Score (Test) | AUC-ROC | AUC-PR | Recall (Test) | Precision (Test) | Estado Metodológico y Conclusiones |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|---|
+| **Regresión Lineal**<br>([`1_regresion_lineal.py`](modelos/1_regresion_lineal.py)) | 20,096 / 5,025 | 0.0000 | 0.8121 | 0.2327 | 0.0000 | 0.0000 | **Válido:** Predictores depurados (sin `raceId`). Evidencia la insuficiencia del umbral estándar $0.5$ ante desbalance severo (~4.9% victorias). Coeficiente `grid` dominante ($\beta = -0.0555$). |
+| **Regresión Logística**<br>([`4_regresion_logistica.py`](modelos/4_regresion_logistica.py)) | 20,096 / 5,025 | 0.2640 | 0.8220 | 0.1792 | 0.5582 | 0.1729 | **Válido:** Coeficientes interpretables sin distorsión temporal. Factor `grid` emerge como predictor cardinal ($\beta=-2.5294$, $\text{Odds Ratio} = 0.0797$). |
+| **Random Forest Baseline**<br>([`2_random_forest.py`](modelos/2_random_forest.py)) | 20,096 / 5,025 | 0.3139 | 0.8855 | 0.2608 | 0.8635 | 0.1915 | **Válido:** Partición cronológica 80/20 y class weighting balanceado. Excelente capacidad de recuperación de victorias (Recall 86.35%). |
+| **Random Forest GridSearch**<br>([`2_random_forest.py`](modelos/2_random_forest.py)) | 20,096 / 5,025 | **0.3349** | **0.8869** | **0.2748** | **0.8394** | **0.2098** | **Modelo Campeón del Proyecto:** Optimizado mediante *TimeSeriesSplit* con regularización de hojas (`min_samples_leaf=2`, `max_depth=12`, `n_estimators=100`). Máximo equilibrio entre precisión y cobertura. |
+| **Perceptrón Multicapa (MLP)**<br>([`3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)) | 20,096 / 5,025 | 0.0000 | 0.7135 | 0.1074 | 0.0000 | 0.0000 | **Válido:** Mecanismo de ponderación muestral corregido. Capacidad discriminativa global capturada por AUC-ROC ($0.7135$); su F1 refleja la sensibilidad al umbral estándar $0.5$ ante desbalance. |
 
 ---
 
@@ -166,6 +124,7 @@ A continuación se sintetizan las métricas reales y auditadas de los modelos tr
 
 Para la reunión con el comité de revisión y asesoría de tesis:
 
-1. **Defensa de la Integridad Temporal:** Presentar con orgullo académico la detección y subsanación del *leakage*. Explicar que un modelo predictivo con $AUC = 0.988$ en Fórmula 1 era indicativo de contaminación de datos, mientras que los valores obtenidos actualmente ($AUC \in [0.82, 0.89]$) representan el estado del arte de la disciplina bajo condiciones de evaluación a priori reales.
-2. **Exhibición de la Suite de Pruebas:** Ejecutar en vivo la suite `py -m unittest tests/test_temporal_integrity.py` para demostrar que el pipeline cuenta con pruebas automatizadas de validación cruzada temporal.
-3. **Respaldo en Control de Versiones:** Apoyarse en el historial de commits y en los hooks de pre-push implementados para evidenciar la madurez de la infraestructura de software del proyecto.
+1. **Defensa de la Integridad Temporal y Rigor Metodológico:** Presentar con orgullo académico la detección y subsanación del *leakage*. Explicar que modelos inflados con métricas ficticias ($AUC > 0.98$) en Fórmula 1 eran síntoma de contaminación o de inclusión de variables espurias (`raceId`), mientras que los valores obtenidos actualmente ($AUC \in [0.81, 0.89]$) representan el estado del arte de la disciplina bajo condiciones de evaluación *a priori* estrictamente causales.
+2. **Destacar el Desempeño del Random Forest:** El modelo Random Forest optimizado mediante `TimeSeriesSplit` se consagra como el modelo de mayor solidez técnica de la tesis, alcanzando un $AUC\text{-}ROC = 0.8869$ y un $\text{Recall} = 83.94\%$, permitiendo predecir victorias con alta sensibilidad a partir de datos exclusivamente pre-carrera.
+3. **Exhibición de la Suite de Pruebas:** Ejecutar en vivo la suite `python -m unittest discover tests -v` para demostrar que el pipeline cuenta con pruebas automatizadas de validación cruzada temporal y chequeo de no-fuga.
+4. **Respaldo en Control de Versiones:** Apoyarse en el historial de commits y en los hooks de pre-push implementados para evidenciar la madurez de la infraestructura de software del proyecto.

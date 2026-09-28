@@ -17,4 +17,4 @@ Los scripts en este directorio han sido **sustituidos** por el pipeline oficial 
 ## Pipeline Actual y Vigente
 El pipeline canónico oficial del proyecto se localiza en:
 - Preparación del dataset pre-carrera: [`data/preparar_datos_tesis.py`](../data/preparar_datos_tesis.py)
-- Modelos predictivos: Directorio [`modelos/`](../modelos/) (`1_regresion_lineal.py`, `2_random_forest.py`, `3_perceptron_multicapa.py`, `4_regresion_logistica.py`, `5_modelo_avanzado.py`).
+- Modelos predictivos: Directorio [`modelos/`](../modelos/) (`1_regresion_lineal.py`, `2_random_forest.py`, `3_perceptron_multicapa.py`, `4_regresion_logistica.py`).

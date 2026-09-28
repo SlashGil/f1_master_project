@@ -32,3 +32,8 @@ desktop.ini
 # Large generated dataset (>100MB exceeds GitHub direct push limits)
 # Regenerable with 'python 1_preparacion_dataset.py'
 data/dataset_tesis_f1.csv
+
+# Modelos y resultados fuera del alcance del proyecto (Modelo 5 no considerado)
+modelos/5_modelo_avanzado.py
+resultados_modelo_avanzado/
+

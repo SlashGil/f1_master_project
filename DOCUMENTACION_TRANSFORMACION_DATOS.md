@@ -133,7 +133,6 @@ Todos los scripts bajo [`modelos/`](modelos/) consumen de manera homogénea el d
 2. **[`modelos/2_random_forest.py`](modelos/2_random_forest.py)**: Random Forest con `TimeSeriesSplit` en validación cruzada y `min_samples_leaf=2`.
 3. **[`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)**: Red neuronal PyTorch con corrección de `BCELoss(reduction='none')` para class weighting efectivo por muestra.
 4. **[`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py)**: Regresión logística con Odds Ratios interpretables (sin distorsión de `raceId`).
-5. **[`modelos/5_modelo_avanzado.py`](modelos/5_modelo_avanzado.py)**: Ensamble y Gradient Boosting con cálculo estricto de tasas históricas vía `.shift(1).expanding()`, calibración de umbrales sobre Train y preservación de la muestra de 25,121 observaciones.
 
 ---
 
