@@ -271,10 +271,10 @@ Si utilizas este repositorio, código o metodología en investigaciones académi
 
 ```bibtex
 @mastersthesis{romero2026f1prediction,
-  author       = {Salvador Romero Gil},
+  author       = { Salvador Romero Gil },
   title        = {Predicci{\'o}n de Victorias en F{\'o}rmula 1 mediante Aprendizaje Autom{\'a}tico: Un Estudio Comparativo de Modelos Predictivos},
-  school       = {Programa de Maestr{\'i}a},
-  year         = {2026},
+  school       = { Universidad Autonoma del Estado de Puebla } ,
+  year         = { 2026 },
   month        = {Septiembre},
   note         = {Repositorio de C{\'o}digo Abierto con Suite de Pruebas Unitarias e Integridad Temporal}
 }
