@@ -38,6 +38,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import copy
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
     f1_score, roc_auc_score, precision_score, recall_score,
@@ -239,7 +240,7 @@ if HAS_TORCH:
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
-            best_weights = model.state_dict().copy()
+            best_weights = copy.deepcopy(model.state_dict())
         else:
             patience_counter += 1
             if patience_counter >= patience:

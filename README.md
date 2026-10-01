@@ -106,7 +106,7 @@ Todas las métricas fueron obtenidas evaluando los modelos de manera ciega sobre
 | **Random Forest (Baseline)** | 20,096 / 5,025 | 0.3139 | 0.8855 | 0.2608 | 86.35% | 19.15% | Alta sensibilidad ante la clase victoria; detecta a la gran mayoría de ganadores a costa de falsos positivos controlables. |
 | **Regresión Logística** | 20,096 / 5,025 | 0.2640 | 0.8220 | 0.1792 | 55.82% | 17.29% | Altamente explicable: la posición de largada (`grid`) reduce el Odds Ratio en un factor de $0.0797$ por posición ($\beta = -2.5294$). |
 | **Regresión Lineal** | 20,096 / 5,025 | 0.0000 | 0.8121 | 0.2327 | 0.00% | 0.00% | Su buen AUC (0.8121) demuestra capacidad ordinal, pero el umbral rígido $0.5$ colapsa ante el desbalance del 4.49%. |
-| **Perceptrón Multicapa (MLP)** | 20,096 / 5,025 | 0.0000 | 0.7135 | 0.1074 | 0.00% | 0.00% | Capacidad discriminativa global verificada ($AUC = 0.7135$); requiere calibración fina del umbral de corte. |
+| **Perceptrón Multicapa (MLP)** | 20,096 / 5,025 | 0.1253 | 0.6488 | 0.0822 | 96.39% | 6.70% | Red neuronal PyTorch (128-64-32) con ponderación de clase minoritaria ($w=11.43$). Extraordinaria sensibilidad (Recall 96.39%) que rescata a 240 de 249 victorias reales. |
 
 ---
 

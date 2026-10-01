@@ -1047,19 +1047,19 @@
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.7135</span>
+              <span class="metric-val">0.6488</span>
             </div>
             <div class="metric-row">
-              <span class="metric-name">Capacidad Global</span>
-              <span class="metric-val">Discriminativa</span>
+              <span class="metric-name">Recall (Cobertura)</span>
+              <span class="metric-val highlight">96.39%</span>
             </div>
             <div class="metric-row">
-              <span class="metric-name">Sensibilidad Umbral</span>
-              <span class="metric-val">Alta (0.5 defecto)</span>
+              <span class="metric-name">F1-Score</span>
+              <span class="metric-val">0.1253</span>
             </div>
             <div class="metric-row">
-              <span class="metric-name">Pérdida Corregida</span>
-              <span class="metric-val highlight">BCELoss Dual</span>
+              <span class="metric-name">Pérdida Ponderada</span>
+              <span class="metric-val highlight">PyTorch Dual</span>
             </div>
           </div>
         </div>
@@ -1124,12 +1124,12 @@
             <tr>
               <td><strong>Perceptrón Multicapa (MLP)</strong></td>
               <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric">0.0000</td>
-              <td class="numeric">0.7135</td>
-              <td class="numeric">0.1074</td>
-              <td class="numeric">0.00%</td>
-              <td class="numeric">0.00%</td>
-              <td>Corregido el gradiente de clase minoritaria; requiere calibración fina de umbral de decisión.</td>
+              <td class="numeric">0.1253</td>
+              <td class="numeric">0.6488</td>
+              <td class="numeric">0.0822</td>
+              <td class="numeric" style="color:var(--green-accent);">96.39%</td>
+              <td class="numeric">6.70%</td>
+              <td>Red PyTorch con class weighting ($w=11.43$). Captura a 240 de 249 ganadores reales (Recall 96.39%).</td>
             </tr>
           </tbody>
         </table>
