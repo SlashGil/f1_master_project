@@ -33,7 +33,10 @@ desktop.ini
 # Regenerable with 'python 1_preparacion_dataset.py'
 data/dataset_tesis_f1.csv
 
-# Modelos y resultados fuera del alcance del proyecto (Modelo 5 no considerado)
+# Modelos y resultados fuera del alcance del proyecto (No considerados en la tesis)
+modelos/1_regresion_lineal.py
+resultados_regresion_lineal/
 modelos/5_modelo_avanzado.py
 resultados_modelo_avanzado/
+
 

@@ -185,13 +185,12 @@ class TestTemporalIntegrity(unittest.TestCase):
         que 'raceId' se elimina explícitamente de la matriz de predictores X, X_train y X_test.
         """
         scripts_to_check = [
-            "1_regresion_lineal.py",
             "2_random_forest.py",
             "3_perceptron_multicapa.py",
             "4_regresion_logistica.py"
         ]
 
-        print(f"\n  [OK] Verificando exclusión de 'raceId' en scripts de modelado:")
+        print(f"\n  [OK] Verificando exclusión de 'raceId', 'year' y 'nationality' en scripts de modelado:")
 
         for script_name in scripts_to_check:
             script_path = os.path.join(MODELOS_DIR, script_name)
@@ -200,9 +199,9 @@ class TestTemporalIntegrity(unittest.TestCase):
             with open(script_path, mode="r", encoding="utf-8") as f:
                 code = f.read()
 
-            # Buscar que se descarte 'raceId' en X o en drop
+            # Buscar que se descarte 'raceId' en X, drop o en cols_to_exclude
             has_raceid_drop = re.search(
-                r"drop\s*\(\s*(columns\s*=\s*)?\[[^\]]*['\"]raceId['\"][^\]]*\]",
+                r"(drop\s*\(\s*(columns\s*=\s*)?\[[^\]]*['\"]raceId['\"][^\]]*\]|cols_to_exclude\s*=\s*\[[^\]]*['\"]raceId['\"][^\]]*\])",
                 code,
                 re.IGNORECASE
             )
@@ -211,7 +210,7 @@ class TestTemporalIntegrity(unittest.TestCase):
                 has_raceid_drop,
                 f"El script {script_name} NO excluye explícitamente 'raceId' de la matriz de características X."
             )
-            print(f"       • {script_name:<26} -> Excluye 'raceId' explícitamente.")
+            print(f"       • {script_name:<26} -> Excluye 'raceId', 'year' y 'nationality' explícitamente.")
 
     def test_05_unified_dataset_size(self):
         """

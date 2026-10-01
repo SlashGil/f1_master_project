@@ -69,9 +69,11 @@ else:
     df_sorted = df.sort_values("raceId").reset_index(drop=True)
 
 # 2. Definir features (X) y target (y)
-# Se excluye 'raceId' por ser un identificador y 'win' por ser el target.
-X = df_sorted.drop(columns=["win", "raceId"], errors="ignore")
+# Se excluye 'raceId' (identificador), 'win' (target) y 'year'/'nationality_*' (fuera de tesis).
+cols_to_exclude = ["win", "raceId", "year"] + [c for c in df_sorted.columns if c.startswith("nationality")]
+X = df_sorted.drop(columns=cols_to_exclude, errors="ignore")
 y = df_sorted["win"]
+print(f"Features seleccionados: {X.shape[1]} variables (sin 'year' ni 'nationality')")
 
 # 3. Realizar el split sobre los datos ya procesados
 split_idx = int(len(df_sorted) * 0.8)
@@ -275,13 +277,10 @@ def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params
     constructor_importance = feature_importance_df[
         feature_importance_df["feature"].str.contains("constructorId_")
     ]["importance"].sum()
-    nationality_importance = feature_importance_df[
-        feature_importance_df["feature"].str.contains("nationality_")
-    ]["importance"].sum()
 
-    tipos = ["Variables Numéricas", "ConstructorID", "Nationality"]
-    importancias = [numeric_importance, constructor_importance, nationality_importance]
-    colores = ["#2E86AB", "#D1495B", "#F0E68C"]
+    tipos = ["Variables Numéricas (grid, age, round)", "ConstructorID"]
+    importancias = [numeric_importance, constructor_importance]
+    colores = ["#2E86AB", "#D1495B"]
 
     plt.figure(figsize=(10, 6))
     bars = plt.bar(tipos, importancias, color=colores, alpha=0.7, edgecolor="black")

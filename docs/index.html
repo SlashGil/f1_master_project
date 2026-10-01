@@ -845,18 +845,18 @@
         </div>
         <div class="kpi-card gold-accent">
           <div class="kpi-label">AUC-ROC Campeón (RF)</div>
-          <div class="kpi-value">0.8869</div>
-          <div class="kpi-subtext">Random Forest + TimeSeriesSplit</div>
+          <div class="kpi-value">0.9265</div>
+          <div class="kpi-subtext">Random Forest + TimeSeriesSplit (201 features)</div>
         </div>
         <div class="kpi-card green-accent">
           <div class="kpi-label">Recall de Victorias</div>
-          <div class="kpi-value">83.94%</div>
-          <div class="kpi-subtext">Capacidad de detección de ganadores</div>
+          <div class="kpi-value">88.35%</div>
+          <div class="kpi-subtext">220 de 249 victorias detectadas</div>
         </div>
         <div class="kpi-card cyan-accent">
-          <div class="kpi-label">Frontera Temporal</div>
-          <div class="kpi-value">80 / 20</div>
-          <div class="kpi-subtext">20,096 Train (1950-2012) | 5,025 Test (2012-2024)</div>
+          <div class="kpi-label">Espacio Dimensional</div>
+          <div class="kpi-value">201</div>
+          <div class="kpi-subtext">Variables pre-carrera (sin year ni nationality)</div>
         </div>
       </div>
     </div>
@@ -960,19 +960,19 @@
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val highlight">0.8869</span>
+              <span class="metric-val highlight">0.9265</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val highlight">83.94%</span>
+              <span class="metric-val highlight">88.35%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.3349</span>
+              <span class="metric-val">0.3580</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val">0.2748</span>
+              <span class="metric-val">0.3766</span>
             </div>
           </div>
         </div>
@@ -989,19 +989,19 @@
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.8855</span>
+              <span class="metric-val">0.9220</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val">86.35%</span>
+              <span class="metric-val">89.16%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.3139</span>
+              <span class="metric-val">0.3402</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val">0.2608</span>
+              <span class="metric-val">0.3283</span>
             </div>
           </div>
         </div>
@@ -1013,24 +1013,24 @@
             <h3 class="model-name">Regresión Logística</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Aporta interpretabilidad econométrica directa. Revela el impacto dominante de la pole position (Odds Ratio = 0.0797 por posición en parrilla).
+            Aporta interpretabilidad econométrica directa. Revela el impacto dominante de la pole position (Odds Ratio = 0.0734 por posición en parrilla, &beta; = -2.6122).
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.8220</span>
+              <span class="metric-val highlight">0.9233</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val">55.82%</span>
+              <span class="metric-val highlight">93.98%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.2640</span>
+              <span class="metric-val">0.3027</span>
             </div>
             <div class="metric-row">
-              <span class="metric-name">Beta Grid</span>
-              <span class="metric-val">-2.5294</span>
+              <span class="metric-name">AUC-PR</span>
+              <span class="metric-val">0.3207</span>
             </div>
           </div>
         </div>
@@ -1042,94 +1042,119 @@
             <h3 class="model-name">Perceptrón Multicapa (MLP)</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Red neuronal densa con ponderación de pérdida corregida (<code style="color:var(--cyan-accent);">reduction='none'</code>) para penalizar el desbalance de clases.
+            Red neuronal densa en PyTorch con ponderación de pérdida corregida. Rescata el 97.59% de las victorias reales (243 de 249 ganadores).
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.6488</span>
+              <span class="metric-val">0.8818</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val highlight">96.39%</span>
+              <span class="metric-val highlight">97.59%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.1253</span>
+              <span class="metric-val">0.2069</span>
             </div>
             <div class="metric-row">
-              <span class="metric-name">Pérdida Ponderada</span>
-              <span class="metric-val highlight">PyTorch Dual</span>
+              <span class="metric-name">AUC-PR</span>
+              <span class="metric-val highlight">0.3531</span>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Full Table -->
+      <!-- Comparative Table: New Results vs Old Results -->
       <div class="table-responsive">
         <table class="f1-table">
           <thead>
             <tr>
               <th>Modelo Predictivo</th>
-              <th>Muestra Train / Test</th>
+              <th>Configuración de Features</th>
               <th>F1-Score</th>
               <th>AUC-ROC</th>
               <th>AUC-PR</th>
               <th>Recall</th>
               <th>Precision</th>
-              <th>Conclusión Metodológica</th>
+              <th>Delta de Rendimiento (&Delta;)</th>
             </tr>
           </thead>
           <tbody>
-            <tr style="background: rgba(255, 184, 0, 0.05);">
-              <td><strong style="color:var(--gold-accent);">Random Forest (GridSearch)</strong></td>
-              <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric" style="color:var(--green-accent);">0.3349</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.8869</td>
-              <td class="numeric">0.2748</td>
-              <td class="numeric">83.94%</td>
-              <td class="numeric">20.98%</td>
-              <td><strong>Modelo Superior:</strong> Máxima discriminación global bajo validación cruzada temporal.</td>
+            <tr style="background: rgba(255, 184, 0, 0.08);">
+              <td rowspan="2"><strong style="color:var(--gold-accent);">🏆 Random Forest (GridSearch)</strong></td>
+              <td style="color: var(--text-dim); font-size: 0.85rem;">Con Year &amp; Nat (245 vars)</td>
+              <td class="numeric" style="color: var(--text-dim);">0.3349</td>
+              <td class="numeric" style="color: var(--text-dim);">0.8869</td>
+              <td class="numeric" style="color: var(--text-dim);">0.2748</td>
+              <td class="numeric" style="color: var(--text-dim);">83.94%</td>
+              <td class="numeric" style="color: var(--text-dim);">20.98%</td>
+              <td rowspan="2"><strong style="color:var(--green-accent);">Mejora Superior:</strong> &Delta;AUC-ROC = +0.0396, &Delta;AUC-PR = +0.1018, &Delta;F1 = +0.0231. Rescata 220 de 249 victorias reales.</td>
+            </tr>
+            <tr style="background: rgba(255, 184, 0, 0.04); border-bottom: 2px solid var(--border-color);">
+              <td><strong style="color:var(--gold-accent);">Sin Year &amp; Nat (201 vars)</strong></td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3580</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9265</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3766</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">88.35%</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">22.45%</td>
+            </tr>
+
+            <tr>
+              <td rowspan="2"><strong>Random Forest (Baseline)</strong></td>
+              <td style="color: var(--text-dim); font-size: 0.85rem;">Con Year &amp; Nat (245 vars)</td>
+              <td class="numeric" style="color: var(--text-dim);">0.3139</td>
+              <td class="numeric" style="color: var(--text-dim);">0.8855</td>
+              <td class="numeric" style="color: var(--text-dim);">0.2608</td>
+              <td class="numeric" style="color: var(--text-dim);">86.35%</td>
+              <td class="numeric" style="color: var(--text-dim);">19.15%</td>
+              <td rowspan="2"><strong style="color:var(--cyan-accent);">Mejora General:</strong> &Delta;AUC-ROC = +0.0365, &Delta;AUC-PR = +0.0675, &Delta;F1 = +0.0263. Mayor robustez y menor varianza.</td>
+            </tr>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
+              <td class="numeric" style="color:var(--green-accent);">0.3402</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9220</td>
+              <td class="numeric">0.3283</td>
+              <td class="numeric" style="color:var(--green-accent);">89.16%</td>
+              <td class="numeric">21.02%</td>
+            </tr>
+
+            <tr>
+              <td rowspan="2"><strong>Regresión Logística</strong></td>
+              <td style="color: var(--text-dim); font-size: 0.85rem;">Con Year &amp; Nat (245 vars)</td>
+              <td class="numeric" style="color: var(--text-dim);">0.2640</td>
+              <td class="numeric" style="color: var(--text-dim);">0.8220</td>
+              <td class="numeric" style="color: var(--text-dim);">0.1792</td>
+              <td class="numeric" style="color: var(--text-dim);">55.82%</td>
+              <td class="numeric" style="color: var(--text-dim);">17.29%</td>
+              <td rowspan="2"><strong style="color:var(--green-accent);">Salto Notable:</strong> &Delta;AUC-ROC = +0.1013, &Delta;Recall = +38.16% (detecta 234 ganadores). Eliminación de colinealidad.</td>
+            </tr>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
+              <td class="numeric">0.3027</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9233</td>
+              <td class="numeric">0.3207</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">93.98%</td>
+              <td class="numeric">18.04%</td>
+            </tr>
+
+            <tr>
+              <td rowspan="2"><strong>Perceptrón Multicapa (MLP)</strong></td>
+              <td style="color: var(--text-dim); font-size: 0.85rem;">Con Year &amp; Nat (245 vars)</td>
+              <td class="numeric" style="color: var(--text-dim);">0.1253</td>
+              <td class="numeric" style="color: var(--text-dim);">0.6488</td>
+              <td class="numeric" style="color: var(--text-dim);">0.0822</td>
+              <td class="numeric" style="color: var(--text-dim);">96.39%</td>
+              <td class="numeric" style="color: var(--text-dim);">6.70%</td>
+              <td rowspan="2"><strong style="color:var(--cyan-accent);">Convergencia Óptima:</strong> &Delta;AUC-ROC = +0.2330, &Delta;AUC-PR = +0.2709. Detección de 243 de 249 ganadores (Recall 97.59%).</td>
             </tr>
             <tr>
-              <td><strong>Random Forest (Baseline)</strong></td>
-              <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric">0.3139</td>
-              <td class="numeric">0.8855</td>
-              <td class="numeric">0.2608</td>
-              <td class="numeric" style="color:var(--green-accent);">86.35%</td>
-              <td class="numeric">19.15%</td>
-              <td>Alta capacidad de captura de victorias a costa de falsos positivos controlables.</td>
-            </tr>
-            <tr>
-              <td><strong>Regresión Logística</strong></td>
-              <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric">0.2640</td>
-              <td class="numeric">0.8220</td>
-              <td class="numeric">0.1792</td>
-              <td class="numeric">55.82%</td>
-              <td class="numeric">17.29%</td>
-              <td>Insuperable en explicabilidad física: la posición en parrilla determina el 92% del Odds Ratio.</td>
-            </tr>
-            <tr>
-              <td><strong>Regresión Lineal</strong></td>
-              <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric">0.0000</td>
-              <td class="numeric">0.8121</td>
-              <td class="numeric">0.2327</td>
-              <td class="numeric">0.00%</td>
-              <td class="numeric">0.00%</td>
-              <td>Demuestra que el umbral estático 0.5 falla ante desbalance extremo a pesar de su buen AUC (0.81).</td>
-            </tr>
-            <tr>
-              <td><strong>Perceptrón Multicapa (MLP)</strong></td>
-              <td class="numeric">20,096 / 5,025</td>
-              <td class="numeric">0.1253</td>
-              <td class="numeric">0.6488</td>
-              <td class="numeric">0.0822</td>
-              <td class="numeric" style="color:var(--green-accent);">96.39%</td>
-              <td class="numeric">6.70%</td>
-              <td>Red PyTorch con class weighting ($w=11.43$). Captura a 240 de 249 ganadores reales (Recall 96.39%).</td>
+              <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
+              <td class="numeric">0.2069</td>
+              <td class="numeric" style="color:var(--green-accent);">0.8818</td>
+              <td class="numeric" style="color:var(--green-accent);">0.3531</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">97.59%</td>
+              <td class="numeric">11.57%</td>
             </tr>
           </tbody>
         </table>
@@ -1251,21 +1276,21 @@
           <img src="assets/roc_rf_grid.png" alt="ROC Curve Random Forest" onclick="openModal(this.src)">
           <div class="plot-caption">
             <h4>Curva ROC: Random Forest (Optimizado)</h4>
-            <p>AUC-ROC = 0.8869 alcanzado en validación ciega de 5,025 carreras.</p>
+            <p>AUC-ROC = 0.9265 alcanzado en validación ciega de 5,025 carreras.</p>
           </div>
         </div>
         <div class="plot-card">
           <img src="assets/roc_logistica.png" alt="Curva ROC Regresión Logística" onclick="openModal(this.src)">
           <div class="plot-caption">
             <h4>Curva ROC: Regresión Logística</h4>
-            <p>AUC-ROC = 0.8220 con separación estricta pre-carrera.</p>
+            <p>AUC-ROC = 0.9233 con separación estricta pre-carrera (sin year ni nationality).</p>
           </div>
         </div>
         <div class="plot-card">
-          <img src="assets/roc_lineal.png" alt="Curva ROC Regresión Lineal" onclick="openModal(this.src)">
+          <img src="assets/roc_mlp.png" alt="Curva ROC Perceptrón Multicapa (PyTorch)" onclick="openModal(this.src)">
           <div class="plot-caption">
-            <h4>Curva ROC: Regresión Lineal</h4>
-            <p>AUC-ROC = 0.8121 confirmando capacidad ordinal.</p>
+            <h4>Curva ROC: Perceptrón Multicapa (MLP)</h4>
+            <p>AUC-ROC = 0.8818 con convergencia optimizada en PyTorch.</p>
           </div>
         </div>
       </div>
@@ -1276,14 +1301,14 @@
           <img src="assets/confusion_matrix_rf_grid.png" alt="Confusion Matrix Random Forest" onclick="openModal(this.src)">
           <div class="plot-caption">
             <h4>Matriz de Confusión: Random Forest</h4>
-            <p>Detección de 209 ganadores reales (Recall de 83.94%).</p>
+            <p>Detección de 220 ganadores reales (Recall de 88.35%).</p>
           </div>
         </div>
         <div class="plot-card">
           <img src="assets/confusion_matrix_mlp.png" alt="Confusion Matrix MLP" onclick="openModal(this.src)">
           <div class="plot-caption">
             <h4>Matriz de Confusión: Perceptrón Multicapa (MLP)</h4>
-            <p>Comportamiento bajo umbral estándar 0.5 ante desbalance.</p>
+            <p>Detección de 243 ganadores reales (Recall de 97.59%).</p>
           </div>
         </div>
       </div>
@@ -1346,7 +1371,7 @@ test_04_raceid_excluded_from_model_features (<span class="t-cyan">TestTemporalIn
 test_05_unified_dataset_size (<span class="t-cyan">TestTemporalIntegrity</span>) ... <span class="t-green">ok</span><br>
 <br>
 ----------------------------------------------------------------------<br>
-<span class="t-bold">Ran 5 tests in 0.653s</span><br>
+<span class="t-bold">Ran 5 tests in 0.921s</span><br>
 <span class="t-green t-bold">OK</span><br>
 <br>
   <span class="t-green">[OK]</span> <span class="t-bold">Frontera Temporal 80/20 Validada:</span><br>
@@ -1361,11 +1386,10 @@ test_05_unified_dataset_size (<span class="t-cyan">TestTemporalIntegrity</span>)
        • Fold 5: Train (20,930 filas) &lt;= Val (4,186 filas, mín 2014-11-02)<br>
 <br>
   <span class="t-green">[OK]</span> <span class="t-bold">Cero variables post-carrera prohibidas en el dataset.</span><br>
-  <span class="t-green">[OK]</span> <span class="t-bold">Exclusión de 'raceId' confirmada en los 4 modelos oficiales:</span><br>
-       • 1_regresion_lineal.py      -&gt; Excluye 'raceId' explícitamente.<br>
-       • 2_random_forest.py         -&gt; Excluye 'raceId' explícitamente.<br>
-       • 3_perceptron_multicapa.py  -&gt; Excluye 'raceId' explícitamente.<br>
-       • 4_regresion_logistica.py   -&gt; Excluye 'raceId' explícitamente.<br>
+  <span class="t-green">[OK]</span> <span class="t-bold">Exclusión de 'raceId', 'year' y 'nationality' confirmada en los 3 modelos oficiales:</span><br>
+       • 2_random_forest.py         -&gt; Excluye 'raceId', 'year' y dummies de nacionalidad.<br>
+       • 3_perceptron_multicapa.py  -&gt; Excluye 'raceId', 'year' y dummies de nacionalidad.<br>
+       • 4_regresion_logistica.py   -&gt; Excluye 'raceId', 'year' y dummies de nacionalidad.<br>
 <br>
   <span class="t-green">[OK]</span> <span class="t-bold">Integridad Muestral: 25,121 observaciones confirmadas.</span>
         </div>

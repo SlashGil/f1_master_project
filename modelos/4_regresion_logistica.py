@@ -104,12 +104,13 @@ except FileNotFoundError:
 
 print("\n[2/8] Preparando Features (X) y Target (y)...")
 
-# Separar features y target (excluyendo raceId como predictor para evitar fuga de información)
-X = df.drop(columns=['win', 'raceId'], errors='ignore')
+# Separar features y target (excluyendo raceId, year y nationality fuera del alcance de la tesis)
+cols_to_exclude = ['win', 'raceId', 'year'] + [c for c in df.columns if c.startswith('nationality')]
+X = df.drop(columns=cols_to_exclude, errors='ignore')
 y = df['win']
 
 print(f"✓ Features seleccionados: {X.shape[1]} variables predictoras")
-print(f"  Incluye variables pre-carrera (grid, year, round, dummies de constructor/nationality)")
+print(f"  Incluye variables pre-carrera oficiales (grid, age, round, dummies de constructor)")
 print(f"✓ Target: win (binario: 1=Victoria, 0=No Victoria)")
 
 # Guardar nombres de features para análisis posterior
@@ -130,9 +131,9 @@ split_idx = int(len(df_sorted) * 0.8)
 train_df = df_sorted.iloc[:split_idx]
 test_df = df_sorted.iloc[split_idx:]
 
-X_train = train_df.drop(columns=['win', 'raceId'], errors='ignore')
+X_train = train_df.drop(columns=cols_to_exclude, errors='ignore')
 y_train = train_df['win']
-X_test = test_df.drop(columns=['win', 'raceId'], errors='ignore')
+X_test = test_df.drop(columns=cols_to_exclude, errors='ignore')
 y_test = test_df['win']
 
 print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.1f}%)")

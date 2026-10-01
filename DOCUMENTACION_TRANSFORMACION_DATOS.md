@@ -79,22 +79,22 @@ data = results.merge(
 
 ## 4. Matriz de Características ($X$) y Reglas Anti-Leakage
 
-### 4.1. Variables Predictoras Autorizadas (Pre-Carrera)
+### 4.1. Variables Predictoras Autorizadas (Pre-Carrera Oficiales)
 
 | Variable | Tipo | Justificación Metodológica |
 |---|---|---|
-| `grid` | Numérica Discreta | Posición de salida en parrilla tras sesión de clasificación oficial. |
+| `grid` | Numérica Discreta | Posición de salida en parrilla tras sesión de clasificación oficial (predictor dominante). |
 | `age` | Numérica Continua | Edad exacta del piloto el día del Gran Premio. |
-| `year` | Numérica / Contextual | Temporada del campeonato. |
 | `round` | Numérica Discreta | Ronda dentro de la temporada (avance del campeonato). |
-| `nationality_*` | Dummy (One-Hot) | Nacionalidad del piloto. |
-| `constructorId_*` | Dummy (One-Hot) | Identificador de la escudería / constructor. |
+| `constructorId_*` | Dummy (One-Hot) | Identificador de la escudería / constructor (poderío técnico y mecánico). |
 
 ### 4.2. Variables Prohibidas y Excluidas
 - `positionOrder`, `position`, `points`, `statusId` (Target leakage / post-carrera).
 - `fastestLapSpeed`, `fastestLapTime`, `rank` (Post-carrera).
 - `milliseconds_pit_stop`, `milliseconds_lap_time` (Intra-carrera).
 - **`raceId`**: Reservado exclusivamente para la ordenación cronológica interna; **excluido de la matriz de predictores**.
+- **`year`**: Excluido de la matriz de predictores $X$ para evitar sesgos de tendencia temporal; reservado para la partición cronológica.
+- **`nationality_*`**: Excluidas de la matriz $X$; su eliminación reduce ruido y esparsidad dimensional, optimizando la generalización en todos los modelos.
 
 ---
 
@@ -125,14 +125,12 @@ X_test_scaled  = scaler.transform(X_test)        # Transform en test
 
 ---
 
-## 6. Modelos Implementados en el Proyecto
+## 6. Modelos Implementados en la Tesis
+Todos los scripts bajo [`modelos/`](modelos/) consumen de manera homogénea el dataset unificado (201 features sin `raceId`, `year` ni `nationality`) respetando las reglas de la auditoría:
 
-Todos los scripts bajo [`modelos/`](modelos/) consumen de manera homogénea el dataset unificado respetando las reglas de la auditoría:
-
-1. **[`modelos/1_regresion_lineal.py`](modelos/1_regresion_lineal.py)**: Regresión lineal base para análisis de coeficientes y magnitud de factores pre-carrera (sin `raceId`).
-2. **[`modelos/2_random_forest.py`](modelos/2_random_forest.py)**: Random Forest con `TimeSeriesSplit` en validación cruzada y `min_samples_leaf=2`.
-3. **[`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)**: Red neuronal PyTorch con corrección de `BCELoss(reduction='none')` para class weighting efectivo por muestra.
-4. **[`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py)**: Regresión logística con Odds Ratios interpretables (sin distorsión de `raceId`).
+1. **[`modelos/2_random_forest.py`](modelos/2_random_forest.py)**: Random Forest (Baseline y GridSearch) con `TimeSeriesSplit` en validación cruzada y `min_samples_leaf=2`.
+2. **[`modelos/3_perceptron_multicapa.py`](modelos/3_perceptron_multicapa.py)**: Red neuronal profunda PyTorch con corrección de pérdida ponderada `nn.BCELoss(reduction='none')`.
+3. **[`modelos/4_regresion_logistica.py`](modelos/4_regresion_logistica.py)**: Regresión logística con Odds Ratios interpretables y estimación probabilística balanceada.
 
 ---
 
