@@ -36,6 +36,7 @@ AUTOR: Salvador Romero Gil
 FECHA: 2026
 """
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -61,9 +62,8 @@ plt.rcParams['figure.figsize'] = [12, 8]
 plt.rcParams['font.size'] = 10
 
 # Directorios
-DATA_DIR = "../data"
-OUTPUT_DIR = "../resultados_regresion_logistica"
-import os
+DATA_DIR = "data" if os.path.exists("data") else "../data"
+OUTPUT_DIR = "resultados_regresion_logistica" if os.path.exists("data") else "../resultados_regresion_logistica"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 print("="*80)
@@ -127,7 +127,14 @@ if {'year', 'round', 'raceId'}.issubset(df.columns):
 else:
     df_sorted = df.sort_values('raceId').reset_index(drop=True)
 
-split_idx = int(len(df_sorted) * 0.8)
+# Partición temporal causal atómica sin fragmentación de carreras:
+# Se incluye el GP de Abu Dabi 2012 completo en entrenamiento (20,108 observaciones)
+# El conjunto de prueba inicia de forma íntegra en el GP de EE.UU. 2012 (5,013 observaciones)
+if {'year', 'round'}.issubset(df_sorted.columns) and ((df_sorted['year'] == 2012) & (df_sorted['round'] == 18)).any():
+    split_idx = df_sorted[(df_sorted['year'] == 2012) & (df_sorted['round'] == 18)].index.max() + 1
+else:
+    split_idx = int(len(df_sorted) * 0.8)
+
 train_df = df_sorted.iloc[:split_idx]
 test_df = df_sorted.iloc[split_idx:]
 
@@ -136,9 +143,9 @@ y_train = train_df['win']
 X_test = test_df.drop(columns=cols_to_exclude, errors='ignore')
 y_test = test_df['win']
 
-print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.1f}%)")
-print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.1f}%)")
-print("✓ Split temporal aplicado (80/20 cronológico)")
+print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.2f}%)")
+print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.2f}%)")
+print("✓ Split temporal atómico aplicado (GP Abu Dabi 2012 íntegro en Train, Test inicia en GP EE.UU. 2012)")
 
 # Verificar balance en conjuntos
 print(f"\n  Distribución en entrenamiento:")

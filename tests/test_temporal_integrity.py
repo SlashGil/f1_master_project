@@ -82,16 +82,28 @@ class TestTemporalIntegrity(unittest.TestCase):
 
     def test_01_chronological_split_boundary(self):
         """
-        Validar que max(fecha_train) <= min(fecha_test) en la partición 80/20.
-        Garantiza que ninguna carrera del conjunto de prueba ocurrió antes que
-        las carreras del conjunto de entrenamiento.
+        Validar que max(fecha_train) < min(fecha_test) en la partición temporal atómica.
+        Garantiza que ninguna carrera del conjunto de prueba ocurrió antes o al mismo tiempo que
+        las carreras del conjunto de entrenamiento, y que el GP de Abu Dabi 2012 queda 100% en Train.
         """
         total_rows = len(self.dataset_rows)
         self.assertGreater(total_rows, 0, "El dataset no debe estar vacío")
 
-        split_idx = int(total_rows * 0.8)
+        # Partición atómica oficial: límite en el final del GP de Abu Dabi 2012 (índice 20,108)
+        # Buscar el último índice del GP de Abu Dabi 2012
+        abu_dhabi_indices = [i for i, r in enumerate(self.dataset_rows) if r["year"] == 2012 and r["round"] == 18]
+        if abu_dhabi_indices:
+            split_idx = max(abu_dhabi_indices) + 1
+        else:
+            split_idx = int(total_rows * 0.8)
+
+        self.assertEqual(split_idx, 20108, f"El split atómico debe ser exactamente 20,108 (obtenido: {split_idx})")
+
         train_slice = self.dataset_rows[:split_idx]
         test_slice = self.dataset_rows[split_idx:]
+
+        self.assertEqual(len(train_slice), 20108, "Train debe contener exactamente 20,108 filas")
+        self.assertEqual(len(test_slice), 5013, "Test debe contener exactamente 5,013 filas")
 
         # Extraer fechas válidas
         train_dates = [r["date"] for r in train_slice if r["date"] is not None]
@@ -103,18 +115,18 @@ class TestTemporalIntegrity(unittest.TestCase):
         max_train_date = max(train_dates)
         min_test_date = min(test_dates)
 
-        # Aserción central de no contaminación temporal
-        self.assertLessEqual(
+        # Aserción central: separación estricta sin traslape de fecha
+        self.assertLess(
             max_train_date,
             min_test_date,
             f"Fuga temporal detectada: La fecha máxima de train ({max_train_date.strftime('%Y-%m-%d')}) "
-            f"es posterior a la fecha mínima de test ({min_test_date.strftime('%Y-%m-%d')})"
+            f"no es estrictamente anterior a la fecha mínima de test ({min_test_date.strftime('%Y-%m-%d')})"
         )
 
         # Reportar frontera cronológica validada
-        print(f"\n  [OK] Frontera Temporal 80/20 Validada:")
-        print(f"       • Train (80% Pasado): {len(train_slice):,} filas | Fecha máx: {max_train_date.strftime('%Y-%m-%d')}")
-        print(f"       • Test  (20% Futuro): {len(test_slice):,} filas | Fecha mín: {min_test_date.strftime('%Y-%m-%d')}")
+        print(f"\n  [OK] Frontera Temporal Atómica Validada:")
+        print(f"       • Train (Pasado Íntegro): {len(train_slice):,} filas | Fecha máx: {max_train_date.strftime('%Y-%m-%d')} (GP Abu Dabi 2012 completado)")
+        print(f"       • Test  (Futuro Ciego):   {len(test_slice):,} filas | Fecha mín: {min_test_date.strftime('%Y-%m-%d')} (Inicia en GP EE.UU. 2012 en Austin)")
 
     def test_02_time_series_split_expanding_folds(self):
         """

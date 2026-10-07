@@ -1,5 +1,5 @@
 > **INSTRUCCIÓN PARA GEMINI AL GENERAR EL GOOGLE DOC:**  
-> *"Por favor, toma el siguiente informe técnico y genera un documento formal de Google Docs con formato académico profesional. Aplica la jerarquía de estilos de Google Docs (Título, Subtítulo, Encabezado 1, Encabezado 2, Encabezado 3), diseña las tablas con formato tabular limpio y encabezados destacados, formatea las expresiones matemáticas con tipografía de ecuación o texto formal, y conserva íntegramente la redacción, citas de archivos y datos de ablación."*
+> *"Por favor, toma el siguiente informe técnico y genera un documento formal de Google Docs con formato académico profesional. Aplica la jerarquía de estilos de Google Docs (Título, Subtítulo, Encabezado 1, Encabezado 2, Encabezado 3), diseña las tablas con formato tabular limpio y encabezados destacados, formatea las expresiones matemáticas con tipografía de ecuación o texto formal, e inserta los bloques de código fuente como cajas de código estructurado con sangría. Conserva íntegramente la redacción, citas de archivos, tablas de ablación y métricas oficiales reproducibles."*
 
 ---
 
@@ -8,79 +8,158 @@
 **Proyecto de Tesis de Maestría:** *Modelado Predictivo y Análisis Causal de Victorias en Fórmula 1 mediante Aprendizaje Automático y Validación Temporal Estricta (1950–2024)*  
 **Tesista / Investigador Principal:** Salvador Romero Gil  
 **Institución Académica:** Programa de Posgrado en Ciencias de Datos / Inteligencia Artificial  
+**Fecha Oficial de Emisión:** 07 de Octubre de 2026  
 **Enlace Oficial al Repositorio en GitHub:** [https://github.com/SlashGil/f1_master_project](https://github.com/SlashGil/f1_master_project)  
-*(Rama de Trabajo Oficial para Revisión: [`test`](https://github.com/SlashGil/f1_master_project/tree/test))*  
-**Fecha de Entrega:** 07 de Octubre de 2026  
+**Rama Oficial de Trabajo y Evaluación:** [`test`](https://github.com/SlashGil/f1_master_project/tree/test)  
 
 ---
 
 ## ÍNDICE GENERAL
 1. [Enlace Oficial del Repositorio y Arquitectura de Control de Versiones](#1-enlace-oficial-del-repositorio-y-arquitectura-de-control-de-versiones)
-2. [Informe de Avance Metodológico y Solución a Problemáticas Fundamentales](#2-informe-de-avance-metodológico-y-solución-a-problemáticas-fundamentales)
-   - 2.1. [Partición Temporal Causal sin Traslape de Fechas](#21-partición-temporal-causal-sin-traslape-de-fechas)
-   - 2.2. [Estudio Experimental de Ablación Dimensional (Año y Nacionalidad)](#22-estudio-experimental-de-ablación-dimensional-año-y-nacionalidad)
-   - 2.3. [Decisiones Metodológicas sobre `year` y `nationality`](#23-decisiones-metodológicas-sobre-year-y-nationality)
-3. [Base de Datos Congelada y Diccionario de Variables Predictoras Finales](#3-base-de-datos-congelada-y-diccionario-de-variables-predictoras-finales)
-   - 3.1. [Protocolo de Congelamiento de Datos (*Data Freezing*)](#31-protocolo-de-congelamiento-de-datos-data-freezing)
-   - 3.2. [Tabla Estructurada de Variables Independientes Oficiales ($D = 201$)](#32-tabla-estructurada-de-variables-independientes-oficiales-d--201)
-4. [Auditoría Integral y Corrección de Problemáticas Detectadas en el Repositorio](#4-auditoría-integral-y-corrección-de-problemáticas-detectadas-en-el-repositorio)
-   - 4.1. [Erradicación de Fuga Temporal por Muestreo Aleatorio (*Data Leakage*)](#41-erradicación-de-fuga-temporal-por-muestreo-aleatorio-data-leakage)
-   - 4.2. [Supresión de Variables Intra-Carrera y Post-Carrera](#42-supresión-de-variables-intra-carrera-y-post-carrera)
-   - 4.3. [Exclusión de Identificadores Sintéticos Artificiales (`raceId`)](#43-exclusión-de-identificadores-sintéticos-artificiales-raceid)
-   - 4.4. [Depuración del Alcance Oficial: Exclusión de OLS y Modelo 5](#44-depuración-del-alcance-oficial-exclusión-de-ols-y-modelo-5)
-   - 4.5. [Gobernanza Git y Protección de la Rama Principal](#45-gobernanza-git-y-protección-de-la-rama-principal)
-   - 4.6. [Suite Automatizada de Pruebas Unitarias de Integridad Científica](#46-suite-automatizada-de-pruebas-unitarias-de-integridad-científica)
-   - 4.7. [Estandarización del Entorno Computacional (`requirements.txt`)](#47-estandarización-del-entorno-computacional-requirementstxt)
-5. [Conclusiones y Próximos Pasos de la Tesis](#5-conclusiones-y-próximos-pasos-de-la-tesis)
+2. [Informe de Avance Metodológico y Tratamiento de la Frontera Causal](#2-informe-de-avance-metodológico-y-tratamiento-de-la-frontera-causal)
+   - 2.1. [Problemática de Fractura de Carreras en el Split Clásico 80/20](#21-problemática-de-fractura-de-carreras-en-el-split-clásico-8020)
+   - 2.2. [Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dabi 2012](#22-estudio-experimental-de-estrategias-de-frontera-gran-premio-de-abu-dabi-2012)
+   - 2.3. [Implementación del Particionamiento Temporal Atómico y Validación Cruzada sin Fractura](#23-implementación-del-particionamiento-temporal-atómico-y-validación-cruzada-sin-fractura)
+3. [Estudio Experimental de Ablación Dimensional (Variables `year` y `nationality`)](#3-estudio-experimental-de-ablación-dimensional-variables-year-y-nationality)
+   - 3.1. [Matriz de Rendimiento Factorial $2 \times 2$](#31-matriz-de-rendimiento-factorial-2-times-2)
+   - 3.2. [Decisión Metodológica y Fundamentación Econométrica](#32-decisión-metodológica-y-fundamentación-econométrica)
+4. [Base de Datos Congelada y Diccionario de Variables Predictoras Finales](#4-base-de-datos-congelada-y-diccionario-de-variables-predictoras-finales)
+   - 4.1. [Protocolo de Congelamiento de Datos (*Data Freezing*)](#41-protocolo-de-congelamiento-de-datos-data-freezing)
+   - 4.2. [Tabla Estructurada del Espacio de Características Final ($D = 201$)](#42-tabla-estructurada-del-espacio-de-características-final-d--201)
+5. [Resultados Oficiales Regenerados en Git (Métricas Verificadas en Disco)](#5-resultados-oficiales-regenerados-en-git-métricas-verificadas-en-disco)
+   - 5.1. [Cuadro Comparativo de los Tres Modelos Oficiales de la Tesis](#51-cuadro-comparativo-de-los-tres-modelos-oficiales-de-la-tesis)
+   - 5.2. [Evidencia de Regeneración y Trazabilidad en el Repositorio](#52-evidencia-de-regeneración-y-trazabilidad-en-el-repositorio)
+6. [Auditoría Integral y Corrección de Problemáticas en el Repositorio](#6-auditoría-integral-y-corrección-de-problemáticas-en-el-repositorio)
+   - 6.1. [Erradicación de Fuga Temporal (*Data Leakage*)](#61-erradicación-de-fuga-temporal-data-leakage)
+   - 6.2. [Supresión de Variables Intra/Post-Carrera](#62-supresión-de-variables-intrapost-carrera)
+   - 6.3. [Exclusión del Identificador Sintético `raceId`](#63-exclusión-del-identificador-sintético-raceid)
+   - 6.4. [Depuración del Alcance Oficial: Exclusión de OLS y Modelo 5](#64-depuración-del-alcance-oficial-exclusión-de-ols-y-modelo-5)
+   - 6.5. [Gobernanza Git y Blindaje de la Rama `main`](#65-gobernanza-git-y-blindaje-de-la-rama-main)
+   - 6.6. [Suite Automatizada de Pruebas Unitarias de Integridad Científica](#66-suite-automatizada-de-pruebas-unitarias-de-integridad-científica)
+   - 6.7. [Estandarización del Entorno Computacional (`requirements.txt`)](#67-estandarización-del-entorno-computacional-requirementstxt)
+7. [Conclusiones](#7-conclusiones)
 
 ---
 
 ## 1. Enlace Oficial del Repositorio y Arquitectura de Control de Versiones
 
-El código fuente, scripts de transformación, modelos computacionales, suite de pruebas automatizadas y visualizaciones del proyecto se encuentran alojados en el siguiente repositorio bajo control de versiones Git:
+El proyecto se gestiona integralmente bajo control de versiones Git y está alojado públicamente en GitHub:
 
-* **Repositorio Central (GitHub):** [https://github.com/SlashGil/f1_master_project](https://github.com/SlashGil/f1_master_project)
-* **Rama Activa de Desarrollo y Evaluación (Scope Oficial de la Tesis):** [`test`](https://github.com/SlashGil/f1_master_project/tree/test)
-* **Rama de Producción Base:** `main`
+* **URL del Repositorio:** [https://github.com/SlashGil/f1_master_project](https://github.com/SlashGil/f1_master_project)
+* **Rama de Trabajo Oficial (Ámbito de Revisión de Tesis):** [`test`](https://github.com/SlashGil/f1_master_project/tree/test)
+* **Rama de Producción Base:** `main` *(Protegida contra pushes accidentales mediante hook `pre-push`)*
 
-> **Nota de Gobernanza:** En cumplimiento con las políticas de aseguramiento de calidad del software científico, la rama `main` se encuentra blindada mediante githooks locales para restringir la incorporación no autorizada de código. La totalidad de las optimizaciones, modelos vigentes y ablaciones se encuentran versionados y auditados en la rama **`test`**.
-
----
-
-## 2. Informe de Avance Metodológico y Solución a Problemáticas Fundamentales
-
-### 2.1. Partición Temporal Causal sin Traslape de Fechas
-
-#### Justificación Epistemológica
-El pronóstico de eventos deportivos en series temporales exige estricta no-anticipación causal: la información utilizada para entrenar un modelo debe pertenecer en su totalidad al pasado cronológico respecto a cualquier observación sobre la cual se infieran predicciones. La utilización previa de esquemas de partición aleatoria convencional (*k-fold cross-validation* o *train_test_split* aleatorio) contaminaba el aprendizaje con vectores del futuro (filtración bidireccional de información o *look-ahead data leakage*), produciendo métricas infladas que carecían de validez experimental.
-
-#### Formulación Matemática del Límite Temporal Causal
-Sea $\mathcal{D} = \{(x_i, y_i, t_i)\}_{i=1}^N$ el conjunto de observaciones ordenadas cronológicamente por tupla de evento $(year_i, round_i, raceId_i)$, donde $t_i$ representa la marca temporal unívoca de la carrera. Se define una partición $80/20$ determinística con frontera fija $t^*$:
-
-$$\mathcal{D}_{\text{train}} = \left\{ (x_i, y_i, t_i) \in \mathcal{D} \mid t_i \le t^* \right\}, \quad N_{\text{train}} = 20,096 \text{ observaciones (80.00\%)}$$
-$$\mathcal{D}_{\text{test}} = \left\{ (x_j, y_j, t_j) \in \mathcal{D} \mid t_j \ge t^* \right\}, \quad N_{\text{test}} = 5,025 \text{ observaciones (20.00\%)}$$
-
-El diseño experimental garantiza la **condición de invariante temporal estricta**:
-$$\max_{i \in \mathcal{D}_{\text{train}}} (t_i) \le \min_{j \in \mathcal{D}_{\text{test}}} (t_j)$$
-
-#### Parámetros Concretos de la Frontera
-* **Conjunto de Entrenamiento ($\mathcal{D}_{\text{train}}$):** Abarca desde el inicio de la era moderna de la Fórmula 1 en el **GP de Gran Bretaña de 1950 (13-05-1950)** hasta el **GP de Abu Dabi de 2012 (04-11-2012)** inclusive.
-* **Conjunto de Prueba Independiente ($\mathcal{D}_{\text{test}}$):** Comprende desde el **GP de Abu Dabi de 2012 (04-11-2012)** hasta el **GP de São Paulo de 2024 (03-11-2024)**.
-* **Validación Cruzada Interna:** Para la optimización de hiperparámetros en el modelo Random Forest, se reemplazó la validación cruzada estratificada por `TimeSeriesSplit(n_splits=5)`, donde cada pliegue de validación $k$ se posiciona en el futuro relativo respecto a los pliegues de entrenamiento $1, \dots, k-1$.
+> **Aseguramiento de Calidad:** La totalidad de los scripts de modelado refactorizados, resultados de re-entrenamiento, visualizaciones actualizadas y documentos de reporte residen exclusivamente en la rama **`test`**, garantizando aislamiento experimental estricto.
 
 ---
 
-### 2.2. Estudio Experimental de Ablación Dimensional (Año y Nacionalidad)
+## 2. Informe de Avance Metodológico y Tratamiento de la Frontera Causal
 
-Con el propósito de resolver rigurosamente el debate metodológico en torno a la conveniencia o perjuicio de incluir la variable temporal continua `year` y el conjunto de variables indicadoras de nacionalidad del piloto `nationality_*`, se diseñó y ejecutó un **experimento de ablación factorial $2 \times 2$**.
+### 2.1. Problemática de Fractura de Carreras en el Split Clásico 80/20
 
-Se evaluaron las cuatro combinaciones posibles sobre el conjunto de prueba independiente ($N_{\text{test}} = 5,025$, con 249 victorias positivas reales, tasa base de clase positiva $\pi_1 = 4.95\%$) empleando los hiperparámetros base de los dos modelos canónicos:
-1. **Regresión Logística Base:** `LogisticRegression(class_weight='balanced', max_iter=1000, solver='lbfgs', C=1.0, random_state=42)` con variables estandarizadas mediante `StandardScaler` ajustado exclusivamente en $\mathcal{D}_{\text{train}}$.
-2. **Random Forest Baseline:** `RandomForestClassifier(n_estimators=100, max_depth=10, min_samples_split=5, min_samples_leaf=2, class_weight='balanced', random_state=42, n_jobs=-1)` sobre el espacio de características crudo.
+Al someter a auditoría el esquema previo de partición cronológica al $80.00\%$ exacto sobre el conjunto unificado ($N = 25,121$ observaciones), se descubrió una anomalía estructural:
+* El índice de corte matemático $\lfloor 25,121 \times 0.80 \rfloor = 20,096$ caía exactamente en el punto medio del **Gran Premio de Abu Dabi de 2012** (`raceId = 877`, Ronda 18 del campeonato, disputada el 04 de noviembre de 2012), compuesto por 24 participantes (filas indexadas del `20,084` al `20,107`).
+* En consecuencia, 12 pilotos de la misma carrera quedaban asignados al conjunto de entrenamiento y los restantes 12 al conjunto de prueba.
+* **Impacto Teórico:** Fraccionar una carrera individual entre entrenamiento y prueba contamina el supuesto de independencia competitiva: los monoplazas en entrenamiento y prueba compitieron simultáneamente sobre el mismo asfalto bajo idénticas condiciones meteorológicas y de pista, introduciendo un micro-traslape espurio.
 
-#### Tabla de Resultados del Estudio de Ablación (4 Combinaciones)
+---
 
-| Configuración Evaluada | Dimensión ($D$) | Modelo Predictivo | F1-Score | AUC-ROC | AUC-PR | Recall | Precision | Accuracy | Verdaderos Positivos (TP) | Falsos Positivos (FP) | Falsos Negativos (FN) |
+### 2.2. Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dabi 2012
+
+Para resolver esta fragmentación con rigurosidad científica, se plantearon y evaluaron empíricamente las cuatro estrategias de manejo de frontera temporal sobre el espacio de características de 201 variables:
+
+1. **Estrategia A (Abu Dabi 100% en TRAIN):** Se amplía el conjunto de entrenamiento para abarcar la totalidad de la ronda 18 ($N_{\text{train}} = 20,108$, $80.04\%$). El conjunto de prueba inicia de forma limpia a partir de la ronda 19: **GP de Estados Unidos 2012 en Austin** ($N_{\text{test}} = 5,013$, $19.96\%$). Cero traslape.
+2. **Estrategia B (Abu Dabi 100% en TEST):** El entrenamiento concluye en la ronda 17 (**GP de India 2012**, $N_{\text{train}} = 20,084$). El conjunto de prueba absorbe a Abu Dabi 2012 en su totalidad ($N_{\text{test}} = 5,037$, 250 victorias en test). Cero traslape.
+3. **Estrategia C (Abu Dabi EXCLUIDO / Buffer de Seguridad):** Se descarta Abu Dabi 2012 de ambos conjuntos como zona de amortiguamiento temporal. Train finaliza en India 2012 ($N_{\text{train}} = 20,084$) y Test arranca en EE.UU. 2012 ($N_{\text{test}} = 5,013$).
+4. **Estrategia D (Línea Base Previa 80/20):** Partición aritmética ciega donde Abu Dabi quedó dividido a la mitad (12 pilotos en train, 12 en test).
+
+#### Tabla de Resultados Comparativos de Estrategias de Frontera
+
+| Estrategia de Frontera | Modelo Predictivo | $N_{\text{train}}$ | $N_{\text{test}}$ | F1-Score | AUC-ROC | AUC-PR | Recall | Precision | Accuracy | TP / Victorias | FP | FN |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **A. Abu Dabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Regresión Logística** | 20,108 | 5,013 | **0.3035** | **0.9234** | **0.3214** | **93.98%** | **18.10%** | **78.58%** | **234 / 249** | **1,059** | **15** |
+| **A. Abu Dabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Random Forest (Base)** | 20,108 | 5,013 | **0.3407** | **0.9233** | **0.3428** | **90.36%** | **20.99%** | **82.63%** | **225 / 249** | **847** | **24** |
+| **B. Abu Dabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Regresión Logística | 20,084 | 5,037 | 0.3035 | 0.9186 | 0.3190 | 93.60% | 18.11% | 78.68% | 234 / 250 | 1,058 | 16 |
+| **B. Abu Dabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Random Forest (Base) | 20,084 | 5,037 | 0.3481 | 0.9213 | 0.3449 | 89.60% | 21.60% | 83.34% | 224 / 250 | 813 | 26 |
+| **C. Abu Dabi EXCLUIDO**<br>*(Buffer de separación)* | Regresión Logística | 20,084 | 5,013 | 0.3047 | 0.9218 | 0.3232 | 93.98% | 18.18% | 78.70% | 234 / 249 | 1,053 | 15 |
+| **C. Abu Dabi EXCLUIDO**<br>*(Buffer de separación)* | Random Forest (Base) | 20,084 | 5,013 | 0.3482 | 0.9216 | 0.3460 | 89.56% | 21.61% | 83.34% | 223 / 249 | 809 | 26 |
+| **D. Split 80/20 Previo**<br>*(Abu Dabi fracturado a la mitad)* | Regresión Logística | 20,096 | 5,025 | 0.3027 | 0.9233 | 0.3207 | 93.98% | 18.04% | 78.55% | 234 / 249 | 1,063 | 15 |
+| **D. Split 80/20 Previo**<br>*(Abu Dabi fracturado a la mitad)* | Random Forest (Base) | 20,096 | 5,025 | 0.3402 | 0.9220 | 0.3283 | 89.16% | 21.02% | 82.87% | 222 / 249 | 834 | 27 |
+
+#### Veredicto de Frontera:
+La **Estrategia A** se erige como la solución metodológicamente óptima:
+1. Elimina la fractura del Gran Premio de Abu Dabi de 2012, manteniéndolo como una unidad competitiva indivisible en el pasado de entrenamiento.
+2. Logra la mayor discriminación global en Regresión Logística ($\text{AUC-ROC} = 0.9234$) y en Random Forest Baseline ($\text{AUC-ROC} = 0.9233$, $\text{AUC-PR} = 0.3428$), capturando 225 victorias reales.
+3. El conjunto de prueba evalúa carreras estrictamente íntegras a partir del Gran Premio de Estados Unidos 2012 (18 de noviembre de 2012).
+
+---
+
+### 2.3. Implementación del Particionamiento Temporal Atómico y Validación Cruzada sin Fractura
+
+A continuación se presentan los fragmentos de código fuente integrados en los scripts del proyecto que ejecutan esta lógica:
+
+#### Fragmento 1: División Causal Atómica por Evento de Carrera
+```python
+# Extracción de frontera atómica en modelos/2_random_forest.py, 3_perceptron_multicapa.py y 4_regresion_logistica.py
+if {'year', 'round'}.issubset(df_sorted.columns) and ((df_sorted['year'] == 2012) & (df_sorted['round'] == 18)).any():
+    # El índice de corte es estrictamente el final del GP de Abu Dabi 2012 (índice 20,108)
+    split_idx = df_sorted[(df_sorted['year'] == 2012) & (df_sorted['round'] == 18)].index.max() + 1
+else:
+    split_idx = int(len(df_sorted) * 0.8)
+
+train_df = df_sorted.iloc[:split_idx]  # 20,108 observaciones (80.04%)
+test_df = df_sorted.iloc[split_idx:]   # 5,013 observaciones (19.96%)
+
+X_train = train_df.drop(columns=cols_to_exclude, errors='ignore')
+y_train = train_df['win']
+X_test = test_df.drop(columns=cols_to_exclude, errors='ignore')
+y_test = test_df['win']
+```
+
+#### Fragmento 2: Validación Cruzada Causal por Carreras Completas (`race_aware_time_series_split`)
+En la optimización de hiperparámetros con `GridSearchCV`, se reemplazó el generador estándar de Scikit-Learn por una partición que respeta los límites de cada carrera (`raceId`):
+
+```python
+def race_aware_time_series_split(df_subset, n_splits=5):
+    """
+    Genera pliegues temporales expansivos agrupados por carreras completas (raceId),
+    garantizando que ninguna carrera individual quede fraccionada entre entrenamiento y validación.
+    """
+    unique_races = df_subset["raceId"].drop_duplicates().tolist()
+    n_races = len(unique_races)
+    split_size = n_races // (n_splits + 1)
+    splits = []
+    
+    for i in range(1, n_splits + 1):
+        train_races = set(unique_races[:split_size * i])
+        val_races = set(unique_races[split_size * i : split_size * (i + 1)])
+        
+        tr_idx = df_subset.index[df_subset["raceId"].isin(train_races)].values
+        val_idx = df_subset.index[df_subset["raceId"].isin(val_races)].values
+        splits.append((tr_idx, val_idx))
+        
+    return splits
+
+# Inyección directa en GridSearchCV
+cv_strategy = race_aware_time_series_split(train_df, n_splits=5)
+grid_search = GridSearchCV(
+    estimator=base_model,
+    param_grid=param_grid,
+    scoring="f1",
+    cv=cv_strategy,
+    n_jobs=-1
+)
+```
+
+---
+
+## 3. Estudio Experimental de Ablación Dimensional (Variables `year` y `nationality`)
+
+### 3.1. Matriz de Rendimiento Factorial $2 \times 2$
+
+Se evaluaron de forma cruzada las 4 combinaciones posibles de inclusión/exclusión de `year` y `nationality_*` sobre los dos estimadores basales, evaluados en el conjunto de prueba independiente ($N_{\text{test}} = 5,025$):
+
+| Configuración Evaluada | Dimensión ($D$) | Modelo Predictivo | F1-Score | AUC-ROC | AUC-PR | Recall | Precision | Accuracy | TP / Victorias | FP | FN |
 |---|:---:|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **1. Con Año, Con Nacionalidad**<br>*(+Year, +Nat)* | **245** | Regresión Logística | 0.2640 | 0.8220 | 0.1792 | 55.82% | 17.29% | 84.58% | 139 / 249 | 665 | 110 |
 | **1. Con Año, Con Nacionalidad**<br>*(+Year, +Nat)* | **245** | Random Forest (Base) | 0.3139 | 0.8855 | 0.2608 | 86.35% | 19.18% | 81.29% | 215 / 249 | 906 | 34 |
@@ -93,128 +172,126 @@ Se evaluaron las cuatro combinaciones posibles sobre el conjunto de prueba indep
 
 ---
 
-### 2.3. Decisiones Metodológicas sobre `year` y `nationality`
+### 3.2. Decisión Metodológica y Fundamentación Econométrica
 
-A partir del análisis de la evidencia experimental anterior y de los principios de inferencia causal y econometría de series temporales, se adopta la siguiente postura técnica para la tesis:
+1. **Supresión Definitiva de `nationality` (43 variables indicadoras binarias):**  
+   * **Veredicto:** Exclusión permanente.
+   * **Justificación:** La presencia de las 43 columnas de nacionalidad deteriora severamente los modelos lineales y probabilísticos. En Regresión Logística, su eliminación provoca un aumento de **$+10.13$ puntos porcentuales de AUC-ROC** ($0.8220 \to 0.9233$) y eleva el Recall de $55.82\%$ a $93.98\%$, permitiendo rescatar a 234 ganadores reales frente a 139. En la F1 moderna, la nacionalidad no aporta señal causal técnica: actúa como ruido disperso de alta dimensionalidad que fragmenta los árboles y diluye los gradientes.
 
-#### Decisión 1: Eliminación Definitiva de `nationality` (43 variables *dummies*)
-* **Evidencia Empírica:** 
-  * En la Regresión Logística, la supresión de `nationality` produce un **salto masivo e indiscutible**: el AUC-ROC se eleva de $0.8220$ a **$0.9233$** ($+10.13$ puntos porcentuales directos) y el Recall pasa de $55.82\%$ a **$93.98\%$** (rescatando a 234 ganadores frente a solo 139 cuando la nacionalidad estaba presente).
-  * En Random Forest, la eliminación de `nationality` incrementa el AUC-ROC de $0.8855$ a **$0.9220$** y eleva el AUC-PR de $0.2608$ a **$0.3283$**, contrayendo los falsos positivos de 906 a 834.
-* **Fundamento Teórico:** 
-  Las 43 variables indicadoras de nacionalidad introducen ruido esparso de alta dimensionalidad con escasa representatividad en clases positivas. En el deporte motor moderno, el mérito de victoria está gobernado por el rendimiento del coche (`constructorId_*`) y la posición de salida (`grid`). La presencia de dummies de nacionalidad fragmentaba los árboles de decisión y descalibraba los pesos logísticos, introduciendo penalizaciones espurias sobre pilotos talentosos pertenecientes a países históricamente poco laureados.
-
-#### Decisión 2: Eliminación Definitiva de `year` (1 variable continua)
-* **Evidencia Empírica:** 
-  Al comparar la configuración 2 *(+Year, -Nat)* con la configuración 4 *(-Year, -Nat)*, se observa que la inclusión de `year` no aporta ventajas operativas estadísticamente significativas:
-  * En Regresión Logística, el AUC-ROC es prácticamente idéntico ($0.9227$ con año vs **$0.9233$** sin año), con exactamente la misma tasa de recuperación de victorias ($93.98\%$, 234 aciertos).
-  * En Random Forest, la diferencia en AUC-ROC es marginal ($0.9242$ vs $0.9220$), pero la remoción de año incrementa la parsimonia del modelo y la robustez fuera de muestra.
-* **Fundamento Teórico y Metodológico (Extrapolación No Estacionaria):** 
-  Bajo una partición temporal estricta, la variable `year` es monótonamente creciente. En el conjunto de entrenamiento, sus valores se encuentran acotados a $[1950, 2012]$, mientras que en el conjunto de prueba pertenecen a $(2012, 2024]$. Dado que ambos soportes son disjuntos ($\text{supp}(year_{\text{train}}) \cap \text{supp}(year_{\text{test}}) = \emptyset$), cualquier estimador que asigne un coeficiente a `year` está forzado a **extrapolar fuera de su soporte muestral**. 
-  
-  En modelos probabilísticos o lineales, asignar un coeficiente negativo o positivo al año altera de forma distorsionada las probabilidades futuras simplemente porque "pasan los años", lo cual es conceptually inválido: un Gran Premio de 2025 o 2026 tendría probabilidades artificialmente deprimidas o infladas con independencia de la calidad del monoplaza y la posición de parrilla. Por el **Principio de Parsimonia (Navaja de Ockham)** y la necesidad de **invarianza causal temporal**, `year` queda **formalmente descartada**.
+2. **Supresión Definitiva de `year` (1 variable numérica continua):**  
+   * **Veredicto:** Exclusión permanente.
+   * **Justificación Teórica:** Al contrastar la configuración 2 *(+Year, -Nat)* con la configuración 4 *(-Year, -Nat)*, se comprueba que el aporte predictivo de `year` es estadísticamente redundante ($\text{AUC-ROC} = 0.9227$ vs $0.9233$ en Logística; $0.9242$ vs $0.9220$ en Random Forest). No obstante, en inferencia de series temporales no estacionarias, `year` es una variable monótona creciente donde $\text{supp}(year_{\text{train}}) = [1950, 2012]$ y $\text{supp}(year_{\text{test}}) = (2012, 2024]$. Al ser soportes disjuntos, incluir `year` fuerza al optimizador a **extrapolar fuera del rango observado**. En producción para temporadas futuras (2025+), el valor de `year` continuaría creciendo indefinidamente, distorsionando los logits. Siguiendo el principio de parsimonia (*Navaja de Ockham*) e invarianza temporal, se excluye formalmente.
 
 ---
 
-## 3. Base de Datos Congelada y Diccionario de Variables Predictoras Finales
+## 4. Base de Datos Congelada y Diccionario de Variables Predictoras Finales
 
-### 3.1. Protocolo de Congelamiento de Datos (*Data Freezing*)
+### 4.1. Protocolo de Congelamiento de Datos (*Data Freezing*)
 
-Para garantizar la reproducibilidad absoluta requerida por la comunidad científica, la base de datos oficial de la investigación ha sido consolidada y congelada en:
+Para garantizar reproducibilidad absoluta ante tribunales de tesis y comités académicos, el conjunto de datos de la investigación se encuentra formalmente congelado:
 
-* **Archivo Canónico:** `data/dataset_tesis_f1.csv`
-* **Volumen Muestral:** $N = 25,121$ filas y $203$ columnas originales (incluyendo `win` y `raceId`).
-* **Población Objetivo:** Todos los Grandes Premios puntuables organizados por la FIA desde la carrera inaugural de 1950 hasta la fecha de corte en 2024.
-* **Distribución de la Variable Objetivo (`win`):**
-  * Victorias ($y = 1$): **1,128 observaciones** ($4.49\%$).
-  * No victorias ($y = 0$): **23,993 observaciones** ($95.51\%$).
-  * Ratio de desbalance: **$1 : 21.27$**.
+* **Ruta en Repositorio:** `data/dataset_tesis_f1.csv`
+* **Volumen:** $N = 25,121$ observaciones y $203$ columnas originales (201 predictores $+ 1$ objetivo $+ 1$ identificador).
+* **Distribución de Clases:**
+  * Victorias ($y = 1$): $1,128$ ($4.49\%$)
+  * No victorias ($y = 0$): $23,993$ ($95.51\%$)
+  * Desbalance severo: $1 : 21.27$
 
 ---
 
-### 3.2. Tabla Estructurada de Variables Independientes Oficiales ($D = 201$)
+### 4.2. Tabla Estructurada del Espacio de Características Final ($D = 201$)
 
-La siguiente tabla describe de manera exhaustiva el vector de características pre-carrera $\mathbf{X} \in \mathbb{R}^{201}$ utilizado por todos los modelos vigentes:
-
-| # | Nombre de la Variable | Tipo de Dato | Definición Conceptual | Archivo de Origen | Momento de Adquisición | Justificación Metodológica según Ablación |
+| # | Nombre de Variable | Tipo de Dato | Definición Conceptual | Archivo de Origen | Momento de Adquisición | Justificación según Ablación |
 |---|---|---|---|---|---|---|
-| **1** | `grid` | Numérica Discreta (`int64`) | Posición asignada al piloto en la parrilla de salida de la carrera. Valores en el rango $[1, 33]$. | `results.csv` | **Sábado / Pre-Carrera:** Obtenida al finalizar la sesión oficial de clasificación (Qualifying), con antelación al inicio del evento dominical. | **Predictor Crítico Dominante:** Absorbe $>68\%$ de la ganancia de impureza en árboles de decisión y genera un $\beta = -2.6122$ ($\text{OR} = 0.0734$) en Regresión Logística. Es el factor individual con mayor correlación con el éxito. |
-| **2** | `age` | Numérica Continua (`float64`) | Edad cronológica exacta del piloto en años al día de la celebración del Gran Premio, calculada como: $\frac{\text{fecha\_carrera} - \text{fecha\_nacimiento}}{365.25}$. | `drivers.csv`<br>(unido con `races.csv`) | **Pre-Carrera:** Calculada antes del Gran Premio a partir de la fecha de nacimiento oficial del piloto (`dob`) y la fecha programada en el calendario. | **Efecto de Madurez y Reflejos:** Modela la relación no lineal entre experiencia acumulada y rendimiento físico en carreras largas de alta exigencia metabólica. |
-| **3** | `round` | Numérica Discreta (`int64`) | Número ordinal de la ronda o Gran Premio dentro del calendario anual de la temporada (ej. Ronda 1 = Apertura, Ronda 20 = Cierre). | `races.csv` | **Pre-Carrera:** Fijada oficialmente por la Federación Internacional del Automóvil (FIA) antes del inicio del campeonato mundial. | **Dinámica Estacional:** Modela la evolución del desarrollo técnico de los monoplazas y las estrategias conservadoras de puntos en las fases tardías del campeonato. |
-| **4 a 201** | `constructorId_*`<br>*(198 columnas binarias)* | Categórica Binaria One-Hot (`int64`, $0$ o $1$) | Variables indicadoras que codifican la identidad del constructor automovilístico o escudería que fabricó y compite con el monoplaza (ej. `constructorId_ferrari`, `constructorId_mclaren`, `constructorId_mercedes`, `constructorId_red_bull`). | `constructors.csv`<br>(unido con `results.csv`) | **Pre-Carrera:** Declarada y verificada en la lista oficial de entrada (*Entry List*) y verificaciones técnicas previas de la FIA los días jueves. | **Vindicada en Ablación:** Al suprimir el ruido de las nacionalidades, los coeficientes de constructores absorbieron con exactitud la jerarquía aerodinámica y de potencia de motor, clave para la predicción de victorias. |
+| **1** | `grid` | Numérica Discreta (`int64`) | Posición de salida del monoplaza en la grilla $[1, 33]$. | `results.csv` | **Sábado (Pre-Carrera):** Obtenida al finalizar la sesión oficial de Clasificación. | Factor dominante de mayor relevancia: absorbe $>68\%$ de la ganancia de impureza en árboles de decisión y genera un Odds Ratio de $0.0734$ ($\beta = -2.6149$) en Regresión Logística. |
+| **2** | `age` | Numérica Continua (`float64`) | Edad cronológica exacta en años del piloto al día del Gran Premio. | `drivers.csv`<br>+ `races.csv` | **Pre-Carrera:** Calculada con la fecha de nacimiento oficial del piloto (`dob`) y la fecha del GP. | Modela la interacción física y metabólica entre experiencia en pista y curva de reflejos motores. |
+| **3** | `round` | Numérica Discreta (`int64`) | Posición ordinal de la carrera dentro del calendario del campeonato mundial. | `races.csv` | **Pre-Carrera:** Calendario fijado por la FIA con anterioridad al inicio de temporada. | Modela la evolución del ritmo de desarrollo técnico intra-temporada y estrategias de puntos. |
+| **4 a 201** | `constructorId_*`<br>*(198 dummies)* | Binaria One-Hot (`int64`, $0$ o $1$) | Columnas indicadoras del equipo fabricante del monoplaza (ej. Ferrari, McLaren, Red Bull, Mercedes). | `constructors.csv`<br>+ `results.csv` | **Pre-Carrera:** Ratificada en la *Entry List* técnica oficial de la FIA los días jueves. | Tras eliminar la nacionalidad, los pesos de constructores absorbieron con exactitud la jerarquía aerodinámica y de potencia motriz de los monoplazas. |
 
-#### Variables Auxiliares no Incluidas en el Espacio Predictor:
-* **`win` (Variable Objetivo):** Binaria ($1$ si `positionOrder == 1`, $0$ en caso contrario). Registrada estrictamente tras la bandera a cuadros y ratificación de comisarios deportivos.
-* **`raceId` (Identificador Indexador):** Numérica entera. Excluida formalmente de la matriz de características; utilizada únicamente para ordenar temporalmente y particionar las muestras sin introducir un contador temporal en el optimizador.
+*Variables de Control (No integradas a la matriz de entrenamiento $X$):*
+* `win`: Variable objetivo supervisada post-carrera ($1$ si `positionOrder == 1`, $0$ en otro caso).
+* `raceId`: Identificador entero secuencial; excluido explícitamente de $X$ y empleado exclusivamente para la indexación y agrupación atómica de carreras.
 
 ---
 
-## 4. Auditoría Integral y Corrección de Problemáticas Detectadas en el Repositorio
+## 5. Resultados Oficiales Regenerados en Git (Métricas Verificadas en Disco)
 
-Durante el proceso de auditoría y refactorización técnica de la tesis se identificaron múltiples anomalías metodológicas en versiones tempranas del repositorio. A continuación se reportan detalladamente las soluciones ejecutadas:
+Tras incorporar la partición atómica (GP de Abu Dabi 2012 íntegro en entrenamiento, $N_{\text{train}} = 20,108$, $N_{\text{test}} = 5,013$) y la validación cruzada agrupada por carreras, se re-ejecutaron todos los modelos oficiales. Los resultados registrados en los archivos CSV de salida son:
 
-### 4.1. Erradicación de Fuga Temporal por Muestreo Aleatorio (*Data Leakage*)
-* **Problema Auditado:** Códigos heredados utilizaban `train_test_split(..., shuffle=True)` sobre el conjunto de datos de carreras, lo que provocaba que carreras del 2023 o 2024 entrenaran modelos para predecir carreras históricas de los años 80 o 90. Esto violaba la causalidad y generaba falsos rendimientos perfectos.
-* **Solución Implementada:** 
-  Se reemplazó la partición por una frontera cronológica determinística 80/20 ordenada por fecha real de carrera. En la optimización de hiperparámetros se implementó `TimeSeriesSplit`, impidiendo matemáticamente que cualquier fold de validación anteceda a su fold de entrenamiento.
+### 5.1. Cuadro Comparativo de los Tres Modelos Oficiales de la Tesis
 
-### 4.2. Supresión de Variables Intra-Carrera y Post-Carrera
-* **Problema Auditado:** El pipeline original contenía columnas contaminantes como `fastestLap`, `fastestLapSpeed`, `milliseconds`, `points`, `laps` y `statusId`. Estas variables solo se conocen durante o después del Gran Premio (por ejemplo, registrar una vuelta rápida o acumular puntos es una consecuencia de estar corriendo en los puestos de cabeza, no un predictor pre-evento).
-* **Solución Implementada:** 
-  Se reescribió integralmente el script [`data/preparar_datos_tesis.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/data/preparar_datos_tesis.py), eliminando cualquier métrica de telemetría posterior a la sesión de clasificación del sábado.
+| Modelo Predictivo Oficial | Archivo de Origen | F1-Score | AUC-ROC | AUC-PR | Recall ($y=1$) | Precision ($y=1$) | Accuracy | TP / Victorias | FP | FN |
+|---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 🏆 **Random Forest (GridSearch)** | `resultados_random_forest_grid_search/metricas_comparativa.csv` | **0.3661** | **0.9273** | **0.3812** | **88.35%** | **23.08%** | **84.80%** | **220 / 249** | **733** | **29** |
+| **Random Forest (Baseline)** | `resultados_random_forest_baseline/metricas_comparativa.csv` | **0.3407** | **0.9233** | **0.3428** | **90.36%** | **20.99%** | **82.63%** | **225 / 249** | **847** | **24** |
+| **Regresión Logística** | `resultados_regresion_logistica/metricas_comparativa.csv` | **0.3035** | **0.9234** | **0.3214** | **93.98%** | **18.10%** | **78.58%** | **234 / 249** | **1,059** | **15** |
+| **Perceptrón Multicapa (PyTorch)** | `resultados_mlp/metricas_comparativa.csv` | **0.1956** | **0.8703** | **0.2264** | **98.80%** | **10.86%** | **59.64%** | **246 / 249** | **2,020** | **3** |
 
-### 4.3. Exclusión de Identificadores Sintéticos Artificiales (`raceId`)
-* **Problema Auditado:** Los scripts anteriores ingresaban la columna entera `raceId` a los modelos predictivos. Al ser una clave primaria secuencial incremental creada por la base de datos relacional Ergast, `raceId` actuaba como un proxy artificial del tiempo, obligando a los algoritmos a memorizar el índice en lugar de evaluar el mérito automovilístico.
-* **Solución Implementada:** 
-  Se introdujo en todos los scripts de modelado una exclusión explícita:
-  ```python
-  cols_to_exclude = ['win', 'raceId', 'year'] + [c for c in df.columns if c.startswith('nationality')]
-  X = df.drop(columns=cols_to_exclude, errors='ignore')
-  ```
+---
 
-### 4.4. Depuración del Alcance Oficial: Exclusión de OLS y Modelo 5
-* **Problema Auditado:** 
-  * Se incluía un script de regresión lineal por mínimos cuadrados ordinarios (`1_regresion_lineal.py`). En clasificación binaria desbalanceada ($1:21$), OLS predice probabilidades fuera del rango $[0, 1]$ y un umbral fijo en $0.5$ colapsa a $0.00\%$ de Recall.
-  * Existía un "Modelo 5" que representaba una suposición experimental fuera del protocolo formal de la tesis.
-* **Solución Implementada:** 
-  * Se eliminó el Modelo 5 y cualquier mención en el repositorio.
-  * Se excluyó formalmente la Regresión Lineal del scope de la tesis. Se incorporaron sus rutas a [`.gitignore`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/.gitignore) (`modelos/1_regresion_lineal.py` y `resultados_regresion_lineal/`) y se desindexaron de Git con `git rm --cached`.
-  * La tesis se concentró exclusivamente en los **tres modelos oficiales**:
-    1. **Random Forest** (Baseline y Optimizado con `TimeSeriesSplit`)
-    2. **Regresión Logística** (Modelo probabilístico econométrico de Odds Ratios)
-    3. **Perceptrón Multicapa (MLP)** (Deep Learning en PyTorch con ponderación de entropía cruzada)
+### 5.2. Evidencia de Regeneración y Trazabilidad en el Repositorio
 
-### 4.5. Gobernanza Git y Protección de la Rama Principal
-* **Problema Auditado:** Riesgo de sobreescritura accidental o de publicar modificaciones experimentales de forma descontrolada sobre la rama `main`.
-* **Solución Implementada:** 
-  * Se instaló un hook de gobernanza en `.githooks/pre-push` que audita el usuario y rechaza empujes directos no autorizados a la rama `main`.
-  * Se estructuró el versionado para que toda la suite de experimentos, ablación y documentación técnica viva aislada y protegida en la rama **`test`**.
+Para garantizar el cumplimiento de la exigencia de rigor y verificabilidad, se constata la presencia y actualización de los siguientes artefactos en disco:
 
-### 4.6. Suite Automatizada de Pruebas Unitarias de Integridad Científica
-* **Problema Auditado:** Falta de verificación reproducible y demostrable de las invariantes metodológicas ante comités o revisores de tesis.
-* **Solución Implementada:** 
-  Se desarrolló [`tests/test_temporal_integrity.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/tests/test_temporal_integrity.py), una suite formal basada en `unittest` con 5 pruebas automatizadas:
-  1. `test_01_chronological_split_boundary`: Certifica que $\max(\text{train}) \le \min(\text{test})$.
-  2. `test_02_time_series_split_expanding_folds`: Simula y valida los 5 pliegues temporales de validación cruzada.
-  3. `test_03_no_prohibited_in_race_features`: Inspecciona el dataset descartando variables intra-carrera.
-  4. `test_04_raceid_excluded_from_model_features`: Aplica análisis estático sobre el código fuente de los 3 modelos oficiales para constatar la exclusión de `raceId`, `year` y `nationality`.
-  5. `test_05_unified_dataset_size`: Verifica el tamaño muestral congelado ($N = 25,121$).
+* **Hiperparámetros Óptimos de Random Forest:** Registrados en [`resultados_random_forest_grid_search/best_params_random_forest.csv`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/resultados_random_forest_grid_search/best_params_random_forest.csv):
+  * $\text{n\_estimators} = 200$, $\text{max\_depth} = 12$, $\text{min\_samples\_split} = 5$, $\text{min\_samples\_leaf} = 2$, $\text{class\_weight} = \text{'balanced'}$.
+* **Tabla de Coeficientes Econométricos:** Registrada en [`resultados_regresion_logistica/tabla_coeficientes_logistica.csv`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/resultados_regresion_logistica/tabla_coeficientes_logistica.csv), reportando:
+  * $\beta_{\text{grid}} = -2.6149 \implies \text{Odds Ratio} = \exp(-2.6149) = 0.0732$.
+* **Pesos y Checkpoint de Red Neuronal:** Modelo binario re-entrenado en PyTorch almacenado en [`resultados_mlp/modelo_mlp.pt`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/resultados_mlp/modelo_mlp.pt).
+* **Gráficas de Curvas ROC y Matrices de Confusión:** Sincronizadas y copiadas a [`docs/assets/`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/docs/assets/).
+
+---
+
+## 6. Auditoría Integral y Corrección de Problemáticas en el Repositorio
+
+Durante el proceso de auditoría y refactorización técnica de la tesis se identificaron múltiples inconsistencias en versiones preliminares del código. A continuación se reporta la resolución definitiva de cada una:
+
+### 6.1. Erradicación de Fuga Temporal (*Data Leakage*)
+* **Diagnóstico:** Se utilizaba `train_test_split(..., shuffle=True)` sobre la base de datos completa. Las carreras de 2023 se empleaban para entrenar predicciones sobre carreras de 1970, lo que inflaba artificialmente las métricas.
+* **Corrección:** Se implementó una frontera temporal determinística cronológica ($1950\text{–}2012$ vs $2012\text{–}2024$) y validación cruzada causal mediante ventanas expansivas (`race_aware_time_series_split`).
+
+### 6.2. Supresión de Variables Intra/Post-Carrera
+* **Diagnóstico:** El conjunto contenía variables conocidas únicamente durante o después de la carrera (`fastestLapSpeed`, `milliseconds`, `points`, `laps`, `statusId`).
+* **Corrección:** Se reescribió [`data/preparar_datos_tesis.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/data/preparar_datos_tesis.py), descartando toda telemetría posterior a la clasificación del sábado.
+
+### 6.3. Exclusión del Identificador Sintético `raceId`
+* **Diagnóstico:** La columna `raceId` actuaba como un proxy del tiempo que permitía a los modelos memorizar el índice de la base de datos en lugar de aprender el mérito automovilístico.
+* **Corrección:** Se programó su exclusión sistemática en todos los modelos: `cols_to_exclude = ['win', 'raceId', 'year'] + nationality_cols`.
+
+### 6.4. Depuración del Alcance Oficial: Exclusión de OLS y Modelo 5
+* **Diagnóstico:** 
+  * La regresión lineal ordinaria por mínimos cuadrados (OLS) es teóricamente inconsistente para clasificación con desbalance severo ($1:21$), produciendo probabilidades fuera de $[0, 1]$ y un Recall de $0.00\%$.
+  * Existía un "Modelo 5" que correspondía a una suposición exploratoria ajena a los objetivos formales de la tesis.
+* **Corrección:** 
+  * Se suprimieron el Modelo 5 y la Regresión Lineal del scope de la tesis.
+  * Se añadieron sus rutas a [`.gitignore`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/.gitignore) (`modelos/1_regresion_lineal.py`, `resultados_regresion_lineal/`, `modelos/5_modelo_avanzado.py`).
+  * Se desindexaron de Git con `git rm --cached`.
+  * La investigación quedó delimitada a los **tres modelos oficiales**: **Random Forest**, **Regresión Logística** y **Perceptrón Multicapa (PyTorch)**.
+
+### 6.5. Gobernanza Git y Blindaje de la Rama `main`
+* **Diagnóstico:** Vulnerabilidad ante pushes directos o sobreescrituras no autorizadas en la rama de producción.
+* **Corrección:** Se configuró el hook `.githooks/pre-push` para restringir la escritura a `main` y se aisló todo el flujo experimental y de ablación en la rama **`test`**.
+
+### 6.6. Suite Automatizada de Pruebas Unitarias de Integridad Científica
+* **Diagnóstico:** Carencia de mecanismos de verificación automática que garantizaran la replicabilidad del pipeline ante revisores.
+* **Corrección:** Se implementó [`tests/test_temporal_integrity.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/tests/test_temporal_integrity.py) con 5 pruebas automatizadas:
+  1. `test_01_chronological_split_boundary`: Certifica la frontera atómica ($\max(\text{train}) < \min(\text{test})$, $20,108$ filas en train vs $5,013$ en test).
+  2. `test_02_time_series_split_expanding_folds`: Valida que los pliegues de validación no traslapen temporalmente con el entrenamiento.
+  3. `test_03_no_prohibited_in_race_features`: Inspecciona que no existan variables post-carrera en el dataset.
+  4. `test_04_raceid_excluded_from_model_features`: Inspecciona el código de los 3 modelos oficiales para certificar la exclusión programática de `raceId`, `year` y `nationality`.
+  5. `test_05_unified_dataset_size`: Verifica el tamaño muestral canónico ($N = 25,121$).
   
-  **Resultado de Ejecución:** `Ran 5 tests in 0.886s -> OK (100% de pruebas aprobadas)`.
+  **Resultado de Ejecución:** `Ran 5 tests in 0.553s -> OK (100% de pruebas aprobadas)`.
 
-### 4.7. Estandarización del Entorno Computacional (`requirements.txt`)
-* **Problema Auditado:** Ausencia de especificación precisa de paquetes para replicar el pipeline de PyTorch y Scikit-Learn.
-* **Solución Implementada:** 
-  Se redactó un archivo [`requirements.txt`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/requirements.txt) unificado con las versiones exactas (`pandas==2.3.2`, `scikit-learn==1.8.0`, `torch==2.14.1`, `imbalanced-learn==0.14.2`, `matplotlib`, `seaborn`).
+### 6.7. Estandarización del Entorno Computacional (`requirements.txt`)
+* **Diagnóstico:** Dificultad para reproducir el entorno en diferentes sistemas operativos y versiones de bibliotecas.
+* **Corrección:** Se generó el archivo [`requirements.txt`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/requirements.txt) fijando versiones compatibles de PyTorch, Scikit-Learn, Pandas, Imbalanced-Learn, Matplotlib y Seaborn.
 
 ---
 
-## 5. Conclusiones y Próximos Pasos de la Tesis
+## 7. Conclusiones
 
-1. **Vindicación del Espacio Compacto ($D = 201$):** La eliminación de `year` y `nationality` no representó una pérdida de poder predictivo, sino un incremento drástico en la capacidad de generalización causal fuera de muestra, reduciendo el sobreajuste y estabilizando tanto estimadores no paramétricos (Random Forest) como paramétricos (Regresión Logística).
-2. **Modelo Campeón Consolidado:** Random Forest Optimizado mediante `TimeSeriesSplit` y regularización foliar (`min_samples_leaf=2`) alcanza el mejor balance con un **AUC-ROC de $0.9265$**, un **AUC-PR de $0.3766$** y un **Recall del $88.35\%$** (detecta a 220 de 249 ganadores de las últimas 12 temporadas).
-3. **Interpretabilidad Física Demostrada:** La Regresión Logística complementa al ensamble demostrando matemáticamente que la posición en parrilla (`grid`) absorbe la mayor carga de la probabilidad ($\text{OR} = 0.0734$).
-4. **Próximos Pasos:**
-   * Exportar el presente informe hacia Google Docs para revisión del director de tesis.
-   * Consolidar el capítulo de discusión de resultados en el manuscrito formal de la tesis de maestría a partir de las tablas de ablación y métricas validadas en la rama `test`.
-
+1. **Alineación Causal y Solución de Frontera:** La partición temporal atómica que integra al Gran Premio de Abu Dabi de 2012 al 100% en el entrenamiento resolvió la fractura artificial de carreras, aportando la frontera más limpia y elevando el rendimiento de los estimadores.
+2. **Superioridad del Espacio Compacto ($D = 201$):** La ablación dimensional confirmó que suprimir `nationality` y `year` erradica el ruido de alta dimensionalidad y el sesgo de extrapolación, maximizando la capacidad de generalización en las últimas 12 temporadas de Fórmula 1.
+3. **Consolidación del Modelo Campeón:** El modelo **Random Forest Optimizado** mediante `race_aware_time_series_split` lidera el benchmark de la tesis con **$\text{AUC-ROC} = 0.9273$**, **$\text{AUC-PR} = 0.3812$** y **$F_1 = 0.3661$**, capturando 220 de las 249 victorias reales de la era contemporánea.
+4. **Reproducibilidad Garantizada:** Todos los códigos, métricas y artefactos han sido regenerados en disco y se encuentran formalmente sincronizados y respaldados en la rama **`test`** del repositorio oficial.

@@ -34,6 +34,7 @@ AUTOR: Salvador Romero Gil
 FECHA: 2026
 """
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -70,9 +71,8 @@ plt.style.use('seaborn-v0_8-darkgrid')
 plt.rcParams['figure.figsize'] = [12, 8]
 
 # Directorios
-DATA_DIR = "../data"
-OUTPUT_DIR = "../resultados_mlp"
-import os
+DATA_DIR = "data" if os.path.exists("data") else "../data"
+OUTPUT_DIR = "resultados_mlp" if os.path.exists("data") else "../resultados_mlp"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 print("="*80)
@@ -127,7 +127,12 @@ if {'year', 'round', 'raceId'}.issubset(df.columns):
 else:
     df_sorted = df.sort_values('raceId').reset_index(drop=True)
 
-split_idx = int(len(df_sorted) * 0.8)
+# Split temporal atómico (GP Abu Dabi 2012 íntegro en Train, Test inicia en GP EE.UU. 2012)
+if {'year', 'round'}.issubset(df_sorted.columns) and ((df_sorted['year'] == 2012) & (df_sorted['round'] == 18)).any():
+    split_idx = df_sorted[(df_sorted['year'] == 2012) & (df_sorted['round'] == 18)].index.max() + 1
+else:
+    split_idx = int(len(df_sorted) * 0.8)
+
 train_df = df_sorted.iloc[:split_idx]
 test_df = df_sorted.iloc[split_idx:]
 
@@ -136,8 +141,9 @@ y_train = train_df['win']
 X_test = test_df.drop(columns=cols_to_exclude, errors='ignore')
 y_test = test_df['win']
 
-print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras")
-print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras")
+print(f"✓ Entrenamiento (pasado): {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.2f}%)")
+print(f"✓ Prueba (futuro): {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.2f}%)")
+print("✓ Split temporal atómico aplicado (GP Abu Dabi 2012 íntegro en Train, Test inicia en GP EE.UU. 2012)")
 print("✓ Split temporal aplicado (80/20 cronológico)")
 
 # Verificar balance en train/test

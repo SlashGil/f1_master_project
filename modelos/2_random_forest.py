@@ -40,9 +40,9 @@ warnings.filterwarnings("ignore")
 plt.style.use("seaborn-v0_8-darkgrid")
 plt.rcParams["figure.figsize"] = [12, 8]
 
-DATA_DIR = "../data"
-OUTPUT_BASELINE = "../resultados_random_forest_baseline"
-OUTPUT_GRID = "../resultados_random_forest_grid_search"
+DATA_DIR = "data" if os.path.exists("data") else "../data"
+OUTPUT_BASELINE = "resultados_random_forest_baseline" if os.path.exists("data") else "../resultados_random_forest_baseline"
+OUTPUT_GRID = "resultados_random_forest_grid_search" if os.path.exists("data") else "../resultados_random_forest_grid_search"
 
 os.makedirs(OUTPUT_BASELINE, exist_ok=True)
 os.makedirs(OUTPUT_GRID, exist_ok=True)
@@ -75,14 +75,22 @@ X = df_sorted.drop(columns=cols_to_exclude, errors="ignore")
 y = df_sorted["win"]
 print(f"Features seleccionados: {X.shape[1]} variables (sin 'year' ni 'nationality')")
 
-# 3. Realizar el split sobre los datos ya procesados
-split_idx = int(len(df_sorted) * 0.8)
+# 3. Realizar el split temporal atómico (GP Abu Dabi 2012 íntegro en Train)
+if {"year", "round"}.issubset(df_sorted.columns) and ((df_sorted["year"] == 2012) & (df_sorted["round"] == 18)).any():
+    split_idx = df_sorted[(df_sorted["year"] == 2012) & (df_sorted["round"] == 18)].index.max() + 1
+else:
+    split_idx = int(len(df_sorted) * 0.8)
+
+train_df = df_sorted.iloc[:split_idx]
+test_df = df_sorted.iloc[split_idx:]
+
 X_train = X.iloc[:split_idx]
 y_train = y.iloc[:split_idx]
 X_test = X.iloc[split_idx:]
 y_test = y.iloc[split_idx:]
 
-print(f"Train: {X_train.shape[0]} | Test: {X_test.shape[0]}")
+print(f"Train: {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.2f}%) | Test: {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.2f}%)")
+print("✓ Split temporal atómico: GP Abu Dabi 2012 100% en Train, Test inicia en GP EE.UU. 2012")
 
 
 # ============================================================================
@@ -351,7 +359,22 @@ param_grid = {
     "min_samples_leaf": [2, 4, 8],
 }
 
-cv_strategy = TimeSeriesSplit(n_splits=3)
+def race_aware_time_series_split(df_subset, n_splits=5):
+    """Genera pliegues temporales agrupados por carreras completas (raceId),
+    garantizando que ninguna carrera individual quede dividida entre entrenamiento y validación."""
+    unique_races = df_subset["raceId"].drop_duplicates().tolist()
+    n_races = len(unique_races)
+    split_size = n_races // (n_splits + 1)
+    splits = []
+    for i in range(1, n_splits + 1):
+        train_races = set(unique_races[:split_size * i])
+        val_races = set(unique_races[split_size * i : split_size * (i + 1)])
+        tr_idx = df_subset.index[df_subset["raceId"].isin(train_races)].values
+        val_idx = df_subset.index[df_subset["raceId"].isin(val_races)].values
+        splits.append((tr_idx, val_idx))
+    return splits
+
+cv_strategy = race_aware_time_series_split(train_df, n_splits=5)
 
 grid_search = GridSearchCV(
     estimator=base_model,

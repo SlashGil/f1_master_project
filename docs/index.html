@@ -845,7 +845,7 @@
         </div>
         <div class="kpi-card gold-accent">
           <div class="kpi-label">AUC-ROC Campeón (RF)</div>
-          <div class="kpi-value">0.9265</div>
+          <div class="kpi-value">0.9273</div>
           <div class="kpi-subtext">Random Forest + TimeSeriesSplit (201 features)</div>
         </div>
         <div class="kpi-card green-accent">
@@ -915,21 +915,21 @@
 
         <div class="timeline-bar">
           <div class="timeline-train">
-            TRAIN SET: 20,096 FILAS (1950-05-13 a 2012-11-04)
+            TRAIN SET: 20,108 FILAS (1950-05-13 a GP Abu Dabi 2012)
           </div>
           <div class="timeline-test">
-            TEST: 5,025 FILAS
+            TEST: 5,013 FILAS (GP EE.UU. 2012 a 2024)
           </div>
         </div>
 
         <div class="split-markers">
           <span>🏁 1950: GP de Gran Bretaña</span>
-          <span style="color: var(--f1-red); font-weight: 700;">Frontera: 2012-11-04 (GP de Abu Dabi)</span>
+          <span style="color: var(--f1-red); font-weight: 700;">Frontera Atómica: GP Abu Dabi 2012 (Ronda 18 completada)</span>
           <span>🏁 2024: GP de São Paulo</span>
         </div>
 
         <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.92rem; color: var(--text-muted);">
-          <strong style="color: #fff;">Validación Cruzada por Series de Tiempo (TimeSeriesSplit):</strong> En el ajuste de hiperparámetros se emplearon 5 pliegues expansivos donde cada conjunto de validación $k$ se ubica estrictamente en el futuro respecto a su conjunto de entrenamiento $k$.
+          <strong style="color: #fff;">Validación Cruzada por Carreras Completas:</strong> En el ajuste de hiperparámetros se implementó <code style="color:var(--cyan-accent);">race_aware_time_series_split</code> con 5 pliegues expansivos donde ninguna carrera individual queda dividida entre entrenamiento y validación.
         </div>
       </div>
     </div>
@@ -942,7 +942,7 @@
         <span class="section-tag">Rendimiento en Test</span>
         <h2 class="section-title">Matriz Comparativa de Modelos Oficiales</h2>
         <p class="section-description">
-          Evaluación rigurosa sobre el conjunto de prueba independiente ($N = 5,025$ observaciones de 2012 a 2024).
+          Evaluación rigurosa sobre el conjunto de prueba independiente ($N = 5,013$ observaciones de 2012 a 2024).
         </p>
       </div>
 
@@ -955,12 +955,12 @@
             <h3 class="model-name">Random Forest (Optimizado)</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Optimizado con TimeSeriesSplit y regularización de hojas (<code style="color:var(--gold-accent);">min_samples_leaf=2</code>). Máximo equilibrio entre precisión y recuperación.
+            Optimizado con TimeSeriesSplit por carreras completas y regularización (<code style="color:var(--gold-accent);">min_samples_leaf=2</code>). Máximo equilibrio y discriminación.
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val highlight">0.9265</span>
+              <span class="metric-val highlight">0.9273</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
@@ -968,11 +968,11 @@
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.3580</span>
+              <span class="metric-val">0.3661</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val">0.3766</span>
+              <span class="metric-val">0.3812</span>
             </div>
           </div>
         </div>
@@ -984,24 +984,24 @@
             <h3 class="model-name">Random Forest (Baseline)</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            100 estimadores balanceados. Destaca por su alta sensibilidad natural hacia la clase victoria con baja tasa de falsos negativos.
+            100 estimadores balanceados. Destaca por su alta sensibilidad natural hacia la clase victoria (Recall 90.36%) con baja tasa de falsos negativos.
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.9220</span>
+              <span class="metric-val">0.9233</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val">89.16%</span>
+              <span class="metric-val highlight">90.36%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.3402</span>
+              <span class="metric-val">0.3407</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val">0.3283</span>
+              <span class="metric-val">0.3428</span>
             </div>
           </div>
         </div>
@@ -1013,12 +1013,12 @@
             <h3 class="model-name">Regresión Logística</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Aporta interpretabilidad econométrica directa. Revela el impacto dominante de la pole position (Odds Ratio = 0.0734 por posición en parrilla, &beta; = -2.6122).
+            Aporta interpretabilidad econométrica directa. Revela el impacto dominante de la pole position (Odds Ratio = 0.0732 por posición en parrilla, &beta; = -2.6149).
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val highlight">0.9233</span>
+              <span class="metric-val highlight">0.9234</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
@@ -1026,11 +1026,11 @@
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.3027</span>
+              <span class="metric-val">0.3035</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val">0.3207</span>
+              <span class="metric-val">0.3214</span>
             </div>
           </div>
         </div>
@@ -1042,24 +1042,24 @@
             <h3 class="model-name">Perceptrón Multicapa (MLP)</h3>
           </div>
           <p style="font-size: 0.88rem; color: var(--text-muted);">
-            Red neuronal densa en PyTorch con ponderación de pérdida corregida. Rescata el 97.59% de las victorias reales (243 de 249 ganadores).
+            Red neuronal densa en PyTorch con ponderación balanceada de muestra. Rescata el 98.80% de victorias reales (246 de 249 ganadores).
           </p>
           <div class="metric-rows">
             <div class="metric-row">
               <span class="metric-name">AUC-ROC</span>
-              <span class="metric-val">0.8818</span>
+              <span class="metric-val">0.8703</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">Recall (Cobertura)</span>
-              <span class="metric-val highlight">97.59%</span>
+              <span class="metric-val highlight">98.80%</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">F1-Score</span>
-              <span class="metric-val">0.2069</span>
+              <span class="metric-val">0.1956</span>
             </div>
             <div class="metric-row">
               <span class="metric-name">AUC-PR</span>
-              <span class="metric-val highlight">0.3531</span>
+              <span class="metric-val">0.2264</span>
             </div>
           </div>
         </div>
@@ -1089,15 +1089,15 @@
               <td class="numeric" style="color: var(--text-dim);">0.2748</td>
               <td class="numeric" style="color: var(--text-dim);">83.94%</td>
               <td class="numeric" style="color: var(--text-dim);">20.98%</td>
-              <td rowspan="2"><strong style="color:var(--green-accent);">Mejora Superior:</strong> &Delta;AUC-ROC = +0.0396, &Delta;AUC-PR = +0.1018, &Delta;F1 = +0.0231. Rescata 220 de 249 victorias reales.</td>
+              <td rowspan="2"><strong style="color:var(--green-accent);">Mejora Superior:</strong> &Delta;AUC-ROC = +0.0404, &Delta;AUC-PR = +0.1064, &Delta;F1 = +0.0312. Rescata 220 de 249 victorias reales.</td>
             </tr>
             <tr style="background: rgba(255, 184, 0, 0.04); border-bottom: 2px solid var(--border-color);">
               <td><strong style="color:var(--gold-accent);">Sin Year &amp; Nat (201 vars)</strong></td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3580</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9265</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3766</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3661</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9273</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.3812</td>
               <td class="numeric" style="color:var(--green-accent); font-weight:700;">88.35%</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">22.45%</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">23.08%</td>
             </tr>
 
             <tr>
@@ -1108,15 +1108,15 @@
               <td class="numeric" style="color: var(--text-dim);">0.2608</td>
               <td class="numeric" style="color: var(--text-dim);">86.35%</td>
               <td class="numeric" style="color: var(--text-dim);">19.15%</td>
-              <td rowspan="2"><strong style="color:var(--cyan-accent);">Mejora General:</strong> &Delta;AUC-ROC = +0.0365, &Delta;AUC-PR = +0.0675, &Delta;F1 = +0.0263. Mayor robustez y menor varianza.</td>
+              <td rowspan="2"><strong style="color:var(--cyan-accent);">Mejora General:</strong> &Delta;AUC-ROC = +0.0378, &Delta;AUC-PR = +0.0820, &Delta;F1 = +0.0268. Mayor robustez y menor varianza.</td>
             </tr>
             <tr style="border-bottom: 2px solid var(--border-color);">
               <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
-              <td class="numeric" style="color:var(--green-accent);">0.3402</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9220</td>
-              <td class="numeric">0.3283</td>
-              <td class="numeric" style="color:var(--green-accent);">89.16%</td>
-              <td class="numeric">21.02%</td>
+              <td class="numeric" style="color:var(--green-accent);">0.3407</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9233</td>
+              <td class="numeric">0.3428</td>
+              <td class="numeric" style="color:var(--green-accent);">90.36%</td>
+              <td class="numeric">20.99%</td>
             </tr>
 
             <tr>
@@ -1127,15 +1127,15 @@
               <td class="numeric" style="color: var(--text-dim);">0.1792</td>
               <td class="numeric" style="color: var(--text-dim);">55.82%</td>
               <td class="numeric" style="color: var(--text-dim);">17.29%</td>
-              <td rowspan="2"><strong style="color:var(--green-accent);">Salto Notable:</strong> &Delta;AUC-ROC = +0.1013, &Delta;Recall = +38.16% (detecta 234 ganadores). Eliminación de colinealidad.</td>
+              <td rowspan="2"><strong style="color:var(--green-accent);">Salto Notable:</strong> &Delta;AUC-ROC = +0.1014, &Delta;Recall = +38.16% (detecta 234 ganadores). Eliminación de colinealidad.</td>
             </tr>
             <tr style="border-bottom: 2px solid var(--border-color);">
               <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
-              <td class="numeric">0.3027</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9233</td>
-              <td class="numeric">0.3207</td>
+              <td class="numeric">0.3035</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">0.9234</td>
+              <td class="numeric">0.3214</td>
               <td class="numeric" style="color:var(--green-accent); font-weight:700;">93.98%</td>
-              <td class="numeric">18.04%</td>
+              <td class="numeric">18.10%</td>
             </tr>
 
             <tr>
@@ -1146,15 +1146,15 @@
               <td class="numeric" style="color: var(--text-dim);">0.0822</td>
               <td class="numeric" style="color: var(--text-dim);">96.39%</td>
               <td class="numeric" style="color: var(--text-dim);">6.70%</td>
-              <td rowspan="2"><strong style="color:var(--cyan-accent);">Convergencia Óptima:</strong> &Delta;AUC-ROC = +0.2330, &Delta;AUC-PR = +0.2709. Detección de 243 de 249 ganadores (Recall 97.59%).</td>
+              <td rowspan="2"><strong style="color:var(--cyan-accent);">Convergencia Óptima:</strong> &Delta;AUC-ROC = +0.2215, &Delta;AUC-PR = +0.1442. Detección de 246 de 249 ganadores (Recall 98.80%).</td>
             </tr>
             <tr>
               <td><strong style="color:var(--text-main);">Sin Year &amp; Nat (201 vars)</strong></td>
-              <td class="numeric">0.2069</td>
-              <td class="numeric" style="color:var(--green-accent);">0.8818</td>
-              <td class="numeric" style="color:var(--green-accent);">0.3531</td>
-              <td class="numeric" style="color:var(--green-accent); font-weight:700;">97.59%</td>
-              <td class="numeric">11.57%</td>
+              <td class="numeric">0.1956</td>
+              <td class="numeric" style="color:var(--green-accent);">0.8703</td>
+              <td class="numeric" style="color:var(--green-accent);">0.2264</td>
+              <td class="numeric" style="color:var(--green-accent); font-weight:700;">98.80%</td>
+              <td class="numeric">10.86%</td>
             </tr>
           </tbody>
         </table>
