@@ -39,4 +39,7 @@ resultados_regresion_lineal/
 modelos/5_modelo_avanzado.py
 resultados_modelo_avanzado/
 
+# Temporary scratch directory
+scratch/
+
 
