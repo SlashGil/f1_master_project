@@ -1,3 +1,8 @@
+> **INSTRUCCIÓN PARA GEMINI AL GENERAR EL GOOGLE DOC:**  
+> *"Por favor, toma el siguiente informe técnico y genera un documento formal de Google Docs con formato académico profesional. Aplica la jerarquía de estilos de Google Docs (Título, Subtítulo, Encabezado 1, Encabezado 2, Encabezado 3), diseña las tablas con formato tabular limpio y encabezados destacados, formatea las expresiones matemáticas con tipografía de ecuación o texto formal, y conserva íntegramente la redacción, citas de archivos y datos de ablación."*
+
+---
+
 # INFORME DE AVANCE Y AUDITORÍA METODOLÓGICA DE INVESTIGACIÓN
 
 **Proyecto de Tesis de Maestría:** *Modelado Predictivo y Análisis Causal de Victorias en Fórmula 1 mediante Aprendizaje Automático y Validación Temporal Estricta (1950–2024)*  
@@ -5,7 +10,7 @@
 **Institución Académica:** Programa de Posgrado en Ciencias de Datos / Inteligencia Artificial  
 **Enlace Oficial al Repositorio en GitHub:** [https://github.com/SlashGil/f1_master_project](https://github.com/SlashGil/f1_master_project)  
 *(Rama de Trabajo Oficial para Revisión: [`test`](https://github.com/SlashGil/f1_master_project/tree/test))*  
-**Fecha de Entrega:** Octubre 2026  
+**Fecha de Entrega:** 07 de Octubre de 2026  
 
 ---
 
@@ -212,3 +217,4 @@ Durante el proceso de auditoría y refactorización técnica de la tesis se iden
 4. **Próximos Pasos:**
    * Exportar el presente informe hacia Google Docs para revisión del director de tesis.
    * Consolidar el capítulo de discusión de resultados en el manuscrito formal de la tesis de maestría a partir de las tablas de ablación y métricas validadas en la rama `test`.
+
