@@ -18,7 +18,7 @@
 1. [Enlace Oficial del Repositorio y Arquitectura de Control de Versiones](#1-enlace-oficial-del-repositorio-y-arquitectura-de-control-de-versiones)
 2. [Informe de Avance Metodológico y Tratamiento de la Frontera Causal](#2-informe-de-avance-metodológico-y-tratamiento-de-la-frontera-causal)
    - 2.1. [Problemática de Fractura de Carreras en el Split Clásico 80/20](#21-problemática-de-fractura-de-carreras-en-el-split-clásico-8020)
-   - 2.2. [Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dabi 2012](#22-estudio-experimental-de-estrategias-de-frontera-gran-premio-de-abu-dabi-2012)
+   - 2.2. [Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dhabi 2012](#22-estudio-experimental-de-estrategias-de-frontera-gran-premio-de-abu-dhabi-2012)
    - 2.3. [Implementación del Particionamiento Temporal Atómico y Validación Cruzada sin Fractura](#23-implementación-del-particionamiento-temporal-atómico-y-validación-cruzada-sin-fractura)
 3. [Estudio Experimental de Ablación Dimensional (Variables `year` y `nationality`)](#3-estudio-experimental-de-ablación-dimensional-variables-year-y-nationality)
    - 3.1. [Matriz de Rendimiento Factorial $2 \times 2$](#31-matriz-de-rendimiento-factorial-2-times-2)
@@ -64,31 +64,31 @@ Al someter a auditoría el esquema previo de partición cronológica al $80.00\%
 
 ---
 
-### 2.2. Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dabi 2012
+### 2.2. Estudio Experimental de Estrategias de Frontera: Gran Premio de Abu Dhabi 2012
 
 Para resolver esta fragmentación con rigurosidad científica, se plantearon y evaluaron empíricamente las cuatro estrategias de manejo de frontera temporal sobre el espacio de características de 201 variables:
 
-1. **Estrategia A (Abu Dabi 100% en TRAIN):** Se amplía el conjunto de entrenamiento para abarcar la totalidad de la ronda 18 ($N_{\text{train}} = 20,108$, $80.04\%$). El conjunto de prueba inicia de forma limpia a partir de la ronda 19: **GP de Estados Unidos 2012 en Austin** ($N_{\text{test}} = 5,013$, $19.96\%$). Cero traslape.
-2. **Estrategia B (Abu Dabi 100% en TEST):** El entrenamiento concluye en la ronda 17 (**GP de India 2012**, $N_{\text{train}} = 20,084$). El conjunto de prueba absorbe a Abu Dabi 2012 en su totalidad ($N_{\text{test}} = 5,037$, 250 victorias en test). Cero traslape.
-3. **Estrategia C (Abu Dabi EXCLUIDO / Buffer de Seguridad):** Se descarta Abu Dabi 2012 de ambos conjuntos como zona de amortiguamiento temporal. Train finaliza en India 2012 ($N_{\text{train}} = 20,084$) y Test arranca en EE.UU. 2012 ($N_{\text{test}} = 5,013$).
-4. **Estrategia D (Línea Base Previa 80/20):** Partición aritmética ciega donde Abu Dabi quedó dividido a la mitad (12 pilotos en train, 12 en test).
+1. **Estrategia A (Abu Dhabi 100% en TRAIN):** Se amplía el conjunto de entrenamiento para abarcar la totalidad de la ronda 18 ($N_{\text{train}} = 20,108$, $80.04\%$). El conjunto de prueba inicia de forma limpia a partir de la ronda 19: **GP de Estados Unidos 2012 en Austin** ($N_{\text{test}} = 5,013$, $19.96\%$). Cero traslape.
+2. **Estrategia B (Abu Dhabi 100% en TEST):** El entrenamiento concluye en la ronda 17 (**GP de India 2012**, $N_{\text{train}} = 20,084$). El conjunto de prueba absorbe a Abu Dhabi 2012 en su totalidad ($N_{\text{test}} = 5,037$, 250 victorias en test). Cero traslape.
+3. **Estrategia C (Abu Dhabi EXCLUIDO / Buffer de Seguridad):** Se descarta Abu Dhabi 2012 de ambos conjuntos como zona de amortiguamiento temporal. Train finaliza en India 2012 ($N_{\text{train}} = 20,084$) y Test arranca en EE.UU. 2012 ($N_{\text{test}} = 5,013$).
+4. **Estrategia D (Línea Base Previa 80/20):** Partición aritmética ciega donde Abu Dhabi quedó dividido a la mitad (12 pilotos en train, 12 en test).
 
 #### Tabla de Resultados Comparativos de Estrategias de Frontera
 
 | Estrategia de Frontera | Modelo Predictivo | $N_{\text{train}}$ | $N_{\text{test}}$ | F1-Score | AUC-ROC | AUC-PR | Recall | Precision | Accuracy | TP / Victorias | FP | FN |
 |---|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **A. Abu Dabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Regresión Logística** | 20,108 | 5,013 | **0.3035** | **0.9234** | **0.3214** | **93.98%** | **18.10%** | **78.58%** | **234 / 249** | **1,059** | **15** |
-| **A. Abu Dabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Random Forest (Base)** | 20,108 | 5,013 | **0.3407** | **0.9233** | **0.3428** | **90.36%** | **20.99%** | **82.63%** | **225 / 249** | **847** | **24** |
-| **B. Abu Dabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Regresión Logística | 20,084 | 5,037 | 0.3035 | 0.9186 | 0.3190 | 93.60% | 18.11% | 78.68% | 234 / 250 | 1,058 | 16 |
-| **B. Abu Dabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Random Forest (Base) | 20,084 | 5,037 | 0.3481 | 0.9213 | 0.3449 | 89.60% | 21.60% | 83.34% | 224 / 250 | 813 | 26 |
-| **C. Abu Dabi EXCLUIDO**<br>*(Buffer de separación)* | Regresión Logística | 20,084 | 5,013 | 0.3047 | 0.9218 | 0.3232 | 93.98% | 18.18% | 78.70% | 234 / 249 | 1,053 | 15 |
-| **C. Abu Dabi EXCLUIDO**<br>*(Buffer de separación)* | Random Forest (Base) | 20,084 | 5,013 | 0.3482 | 0.9216 | 0.3460 | 89.56% | 21.61% | 83.34% | 223 / 249 | 809 | 26 |
-| **D. Split 80/20 Previo**<br>*(Abu Dabi fracturado a la mitad)* | Regresión Logística | 20,096 | 5,025 | 0.3027 | 0.9233 | 0.3207 | 93.98% | 18.04% | 78.55% | 234 / 249 | 1,063 | 15 |
-| **D. Split 80/20 Previo**<br>*(Abu Dabi fracturado a la mitad)* | Random Forest (Base) | 20,096 | 5,025 | 0.3402 | 0.9220 | 0.3283 | 89.16% | 21.02% | 82.87% | 222 / 249 | 834 | 27 |
+| **A. Abu Dhabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Regresión Logística** | 20,108 | 5,013 | **0.3035** | **0.9234** | **0.3214** | **93.98%** | **18.10%** | **78.58%** | **234 / 249** | **1,059** | **15** |
+| **A. Abu Dhabi 100% en TRAIN**<br>*(Test inicia en EE.UU. 2012)* | **Random Forest (Base)** | 20,108 | 5,013 | **0.3407** | **0.9233** | **0.3428** | **90.36%** | **20.99%** | **82.63%** | **225 / 249** | **847** | **24** |
+| **B. Abu Dhabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Regresión Logística | 20,084 | 5,037 | 0.3035 | 0.9186 | 0.3190 | 93.60% | 18.11% | 78.68% | 234 / 250 | 1,058 | 16 |
+| **B. Abu Dhabi 100% en TEST**<br>*(Train finaliza en India 2012)* | Random Forest (Base) | 20,084 | 5,037 | 0.3481 | 0.9213 | 0.3449 | 89.60% | 21.60% | 83.34% | 224 / 250 | 813 | 26 |
+| **C. Abu Dhabi EXCLUIDO**<br>*(Buffer de separación)* | Regresión Logística | 20,084 | 5,013 | 0.3047 | 0.9218 | 0.3232 | 93.98% | 18.18% | 78.70% | 234 / 249 | 1,053 | 15 |
+| **C. Abu Dhabi EXCLUIDO**<br>*(Buffer de separación)* | Random Forest (Base) | 20,084 | 5,013 | 0.3482 | 0.9216 | 0.3460 | 89.56% | 21.61% | 83.34% | 223 / 249 | 809 | 26 |
+| **D. Split 80/20 Previo**<br>*(Abu Dhabi fracturado a la mitad)* | Regresión Logística | 20,096 | 5,025 | 0.3027 | 0.9233 | 0.3207 | 93.98% | 18.04% | 78.55% | 234 / 249 | 1,063 | 15 |
+| **D. Split 80/20 Previo**<br>*(Abu Dhabi fracturado a la mitad)* | Random Forest (Base) | 20,096 | 5,025 | 0.3402 | 0.9220 | 0.3283 | 89.16% | 21.02% | 82.87% | 222 / 249 | 834 | 27 |
 
 #### Veredicto de Frontera:
 La **Estrategia A** se erige como la solución metodológicamente óptima:
-1. Elimina la fractura del Gran Premio de Abu Dabi de 2012, manteniéndolo como una unidad competitiva indivisible en el pasado de entrenamiento.
+1. Elimina la fractura del Gran Premio de Abu Dhabi de 2012, manteniéndolo como una unidad competitiva indivisible en el pasado de entrenamiento.
 2. Logra la mayor discriminación global en Regresión Logística ($\text{AUC-ROC} = 0.9234$) y en Random Forest Baseline ($\text{AUC-ROC} = 0.9233$, $\text{AUC-PR} = 0.3428$), capturando 225 victorias reales.
 3. El conjunto de prueba evalúa carreras estrictamente íntegras a partir del Gran Premio de Estados Unidos 2012 (18 de noviembre de 2012).
 
