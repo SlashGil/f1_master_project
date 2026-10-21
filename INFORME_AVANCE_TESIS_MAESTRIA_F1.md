@@ -58,7 +58,7 @@ El proyecto se gestiona integralmente bajo control de versiones Git y está aloj
 ### 2.1. Problemática de Fractura de Carreras en el Split Clásico 80/20
 
 Al someter a auditoría el esquema previo de partición cronológica al $80.00\%$ exacto sobre el conjunto unificado ($N = 25,121$ observaciones), se descubrió una anomalía estructural:
-* El índice de corte matemático $\lfloor 25,121 \times 0.80 \rfloor = 20,096$ caía exactamente en el punto medio del **Gran Premio de Abu Dabi de 2012** (`raceId = 877`, Ronda 18 del campeonato, disputada el 04 de noviembre de 2012), compuesto por 24 participantes (filas indexadas del `20,084` al `20,107`).
+* El índice de corte matemático $\lfloor 25,121 \times 0.80 \rfloor = 20,096$ caía exactamente en el punto medio del **Gran Premio de Abu Dhabi de 2012** (`raceId = 877`, Ronda 18 del campeonato, disputada el 04 de noviembre de 2012), compuesto por 24 participantes (filas indexadas del `20,084` al `20,107`).
 * En consecuencia, 12 pilotos de la misma carrera quedaban asignados al conjunto de entrenamiento y los restantes 12 al conjunto de prueba.
 * **Impacto Teórico:** Fraccionar una carrera individual entre entrenamiento y prueba contamina el supuesto de independencia competitiva: los monoplazas en entrenamiento y prueba compitieron simultáneamente sobre el mismo asfalto bajo idénticas condiciones meteorológicas y de pista, introduciendo un micro-traslape espurio.
 
