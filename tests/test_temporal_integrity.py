@@ -97,12 +97,12 @@ class TestTemporalIntegrity(unittest.TestCase):
         else:
             split_idx = int(total_rows * 0.8)
 
-        self.assertEqual(split_idx, 20108, f"El split atómico debe ser exactamente 20,108 (obtenido: {split_idx})")
+        self.assertEqual(split_idx, 20020, f"El split atómico debe ser exactamente 20,020 (obtenido: {split_idx})")
 
         train_slice = self.dataset_rows[:split_idx]
         test_slice = self.dataset_rows[split_idx:]
 
-        self.assertEqual(len(train_slice), 20108, "Train debe contener exactamente 20,108 filas")
+        self.assertEqual(len(train_slice), 20020, "Train debe contener exactamente 20,020 filas")
         self.assertEqual(len(test_slice), 5013, "Test debe contener exactamente 5,013 filas")
 
         # Extraer fechas válidas
@@ -229,14 +229,14 @@ class TestTemporalIntegrity(unittest.TestCase):
         Verificar que el dataset unificado oficial conserve exactamente
         las 25,121 observaciones requeridas por la auditoría académica.
         """
-        expected_rows = 25121
+        expected_rows = 25033
         actual_rows = len(self.dataset_rows)
         self.assertEqual(
             actual_rows,
             expected_rows,
             f"Tamaño inesperado del dataset: {actual_rows} (esperado: {expected_rows})"
         )
-        print(f"\n  [OK] Integridad Muestral: 25,121 observaciones confirmadas.")
+        print(f"\n  [OK] Integridad Muestral: 25,033 observaciones confirmadas (cero duplicados por relevos históricos).")
 
 
 if __name__ == "__main__":

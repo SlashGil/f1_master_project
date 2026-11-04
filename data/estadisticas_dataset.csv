@@ -1,7 +1,7 @@
 metrica,valor,comentario
-Total observaciones,25121,Número total de observaciones en el dataset
-Total victorias,1128,Casos positivos (piloto ganó)
-Total sin victorias,23993,Casos negativos (piloto no ganó)
+Total observaciones,25033,Número total de observaciones en el dataset
+Total victorias,1125,Casos positivos (piloto ganó)
+Total sin victorias,23908,Casos negativos (piloto no ganó)
 Porcentaje victorias,4.49%,Porcentaje de casos positivos
 Porcentaje sin victorias,95.51%,Porcentaje de casos negativos
 Features totales,246,Variables predictoras (excluyendo target)

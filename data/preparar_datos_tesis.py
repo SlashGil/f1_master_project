@@ -11,6 +11,18 @@ Objetivo de esta versión:
 
 from __future__ import annotations
 
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from datetime import datetime
 import pandas as pd
 import numpy as np
@@ -28,10 +40,13 @@ CONFIG = {
     "escalado_recomendado": "Ajustar scaler SOLO con train y luego transformar test",
 }
 
-NOMBRE_DATASET = "dataset_tesis_f1.csv"
-NOMBRE_METADATA = "metadata_dataset.csv"
-NOMBRE_ESTADISTICAS = "estadisticas_dataset.csv"
-NOMBRE_DOC = "DOCUMENTACION_DATASET_TESIS.md"
+import os
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = SCRIPT_DIR if os.path.exists(os.path.join(SCRIPT_DIR, "results.csv")) else os.path.join(SCRIPT_DIR, "data")
+NOMBRE_DATASET = os.path.join(DATA_DIR, "dataset_tesis_f1.csv")
+NOMBRE_METADATA = os.path.join(DATA_DIR, "metadata_dataset.csv")
+NOMBRE_ESTADISTICAS = os.path.join(DATA_DIR, "estadisticas_dataset.csv")
+NOMBRE_DOC = os.path.join(DATA_DIR, "DOCUMENTACION_DATASET_TESIS.md")
 
 
 # ============================================================================
@@ -43,9 +58,9 @@ print(" PREPARACIÓN DE DATOS F1 - VERSIÓN PRE-CARRERA (SIN FUGA TEMPORAL)")
 print("=" * 90)
 
 print("\n[1/7] Cargando archivos fuente...")
-results = pd.read_csv("results.csv")
-drivers = pd.read_csv("drivers.csv")
-races = pd.read_csv("races.csv")
+results = pd.read_csv(os.path.join(DATA_DIR, "results.csv"))
+drivers = pd.read_csv(os.path.join(DATA_DIR, "drivers.csv"))
+races = pd.read_csv(os.path.join(DATA_DIR, "races.csv"))
 
 print(f"  ✓ results.csv : {results.shape[0]:,} x {results.shape[1]}")
 print(f"  ✓ drivers.csv : {drivers.shape[0]:,} x {drivers.shape[1]}")
@@ -110,6 +125,7 @@ features_categoricas = ["nationality", "constructorId"]
 
 columnas_base = [
     "raceId",
+    "driverId",
     *features_numericas,
     *features_categoricas,
     "win",
@@ -120,10 +136,18 @@ data = data[columnas_base].dropna().copy()
 
 # Filtro de calidad mínima: posiciones de salida válidas (>0)
 data = data[data["grid"] > 0].copy()
+filas_con_duplicados = len(data)
+
+# Criterio pre-carrera: 1 solo registro por piloto por carrera (resolución de relevos/shared drives de 1950-1964)
+# Se conserva la posición original de largada en parrilla y se descarta el coche tomado en boxes
+data = data.drop_duplicates(subset=["raceId", "driverId"], keep="first").copy()
+filas_eliminadas_relevos = filas_con_duplicados - len(data)
 
 despues_dropna = len(data)
 print(f"  ✓ Filas antes de limpieza final: {antes_dropna:,}")
-print(f"  ✓ Filas después de limpieza: {despues_dropna:,}")
+print(f"  ✓ Filas con grid > 0: {filas_con_duplicados:,}")
+print(f"  ✓ Filas de relevos compartidos eliminadas: {filas_eliminadas_relevos:,}")
+print(f"  ✓ Filas después de limpieza (biyectivas piloto-carrera): {despues_dropna:,}")
 
 
 # ============================================================================

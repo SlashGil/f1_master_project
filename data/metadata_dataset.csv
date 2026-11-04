@@ -1,16 +1,16 @@
 tipo,clave,valor
 configuracion,version,2.0
-configuracion,fecha_generacion,2026-04-16 11:25:10
+configuracion,fecha_generacion,2026-11-04 12:13:12
 configuracion,descripcion,Dataset pre-carrera para predicción de victoria en F1 (sin fuga temporal)
 metodologia,split_recomendado,TimeSeriesSplit / corte temporal por año-ronda (no random 80/20)
 metodologia,escalado_recomendado,Ajustar scaler SOLO con train y luego transformar test
 metodologia,features_excluidas_por_fuga,"fastestLapSpeed, milliseconds_pit_stop, milliseconds_lap_time, positionOrder (como feature)"
-dataset_final,nombre_archivo,dataset_tesis_f1.csv
-dataset_final,observaciones,25121
+dataset_final,nombre_archivo,C:\Users\slash\PyCharmMiscProject\f1_master_project\data\dataset_tesis_f1.csv
+dataset_final,observaciones,25033
 dataset_final,columnas_totales,247
 dataset_final,features_numericas_base,"age, grid, year, round"
 dataset_final,features_categoricas_base,"nationality, constructorId"
-estadisticas_clases,total_observaciones,25121
-estadisticas_clases,victorias,1128
-estadisticas_clases,sin_victorias,23993
+estadisticas_clases,total_observaciones,25033
+estadisticas_clases,victorias,1125
+estadisticas_clases,sin_victorias,23908
 estadisticas_clases,porcentaje_victorias,4.49%

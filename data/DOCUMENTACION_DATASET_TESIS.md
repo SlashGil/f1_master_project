@@ -1,4 +1,4 @@
-# Documentación del Dataset: dataset_tesis_f1.csv
+# Documentación del Dataset: C:\Users\slash\PyCharmMiscProject\f1_master_project\data\dataset_tesis_f1.csv
 
 ## 1. Objetivo de esta versión
 
@@ -9,7 +9,7 @@ Esta versión del dataset está diseñada para **predicción pre-carrera** y cor
 
 ## 2. Principios metodológicos aplicados
 
-- **Nombre final preservado**: `dataset_tesis_f1.csv`
+- **Nombre final preservado**: `C:\Users\slash\PyCharmMiscProject\f1_master_project\data\dataset_tesis_f1.csv`
 - **Split recomendado**: **TimeSeriesSplit** o corte temporal ordenado por `year`, `round`, `raceId`
 - **Escalado correcto**: `StandardScaler` se ajusta **solo en train**, y luego transforma test
 
@@ -28,10 +28,10 @@ Esta versión del dataset está diseñada para **predicción pre-carrera** y cor
 
 ## 5. Tamaño del dataset generado
 
-- Observaciones: 25,121
+- Observaciones: 25,033
 - Columnas totales: 247
 - Features (sin target): 246
-- Victorias: 1,128 (4.49%)
+- Victorias: 1,125 (4.49%)
 
 ## 6. Ejemplo correcto de split temporal + escalado
 
@@ -64,5 +64,5 @@ X_test_scaled = scaler.transform(X_test)
 ---
 
 **Generado automáticamente por:** `preparar_datos_tesis.py`  
-**Fecha:** 2026-04-16 11:25:10  
+**Fecha:** 2026-11-04 12:13:12  
 **Versión del documento:** 2.0

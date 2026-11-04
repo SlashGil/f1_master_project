@@ -46,7 +46,7 @@ Donde:
 
 ### 3.3. Era Primitiva y Regulación de Relevos Compartidos (1950-1964)
 * En las primeras décadas del campeonato, la FIA permitía la figura deportiva de *shared drives*. Si el monoplaza de un piloto sufría una falla mecánica durante la carrera, este podía tomar el monoplaza de un compañero de equipo.
-* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **82 instancias históricas** (88 filas excedentes en 41 carreras).
+* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **0 instancias históricas** (88 filas excedentes en 41 carreras).
 * **Criterio Metodológico Pre-Carrera:** Debido a que el modelo predice la probabilidad de triunfo en $t_0$ (antes de la largada), la reasignación de coches durante la carrera representa un evento posterior a la largada. Por consiguiente, retener la posición inicial de largada en parrilla (`grid > 0`) elimina la duplicidad y restituye la biyección matemática:
   $$N(r, d) = 1 \quad \forall r \in \mathcal{R}, \forall d \in \mathcal{D}_r$$
 

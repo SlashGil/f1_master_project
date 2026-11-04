@@ -122,17 +122,18 @@ def cargar_y_alinear_datos(rutas: dict[str, str]) -> tuple[pd.DataFrame, pd.Data
     # Orden cronológico canónico
     merged = merged.sort_values(["year", "round", "raceId"]).reset_index(drop=True)
 
-    # Validar alineación con dataset_tesis_f1.csv
-    if len(merged) != len(df_tesis):
-        # Si difieren, reportar pero permitir continuar
-        print(f"  [AVISO] El tamaño del dataset procesado ({len(df_tesis):,}) difiere del merge ({len(merged):,}).")
-    else:
-        # Enriquecer df_tesis con metadatos de trazabilidad
+    # Si df_tesis ya fue deduplicado (25,033 filas), alinear merged deduplicado
+    if len(df_tesis) != len(merged):
+        merged = merged.drop_duplicates(subset=["raceId", "driverId"], keep="first").sort_values(["year", "round", "raceId"]).reset_index(drop=True)
+
+    if len(merged) == len(df_tesis):
         df_tesis["driverId"] = merged["driverId"].values
         df_tesis["driverRef"] = merged["driverRef"].values
         df_tesis["driver_name"] = (merged["forename"] + " " + merged["surname"]).values
         df_tesis["race_name"] = merged["name"].values
         df_tesis["race_date"] = merged["date"].values
+    else:
+        print(f"  [AVISO] El tamaño del dataset procesado ({len(df_tesis):,}) difiere del merge ({len(merged):,}).")
 
     return df_tesis, merged
 
