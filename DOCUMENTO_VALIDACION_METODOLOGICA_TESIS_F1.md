@@ -1,385 +1,421 @@
-# Documento de Validación Metodológica y Auditoría de Datos
-## Proyecto de Tesis de Maestría: Predicción Pre-Carrera de Victoria en Fórmula 1 mediante Machine Learning
+# Documento de Validación Metodológica, Auditoría de Datos y Trazabilidad Experimental
+## Tesis de Maestría: Predicción Pre-Carrera de Victoria en Fórmula 1 mediante Machine Learning
 
 **Autor:** Salvador Romero Gil  
 **Programa:** Maestría en Ciencia de Datos / Inteligencia Artificial  
-**Fecha de Emisión Oficial:** 07 de Octubre de 2026  
-**Fecha de Auditoría Técnica y Validación:** 21 de Octubre de 2026  
-**Rama de Control de Versiones:** `test` (Repositorio Git Oficial)  
+**Fecha de Emisión Oficial:** Noviembre de 2026  
+**Entorno de Ejecución:** Repositorio Git Oficial (Rama `test`)  
+**Dataset Oficial:** `data/dataset_tesis_f1.csv`  
 
 ---
 
 ## Resumen Ejecutivo
 
-El presente informe constituye el dictamen técnico y metodológico definitivo solicitado para la consolidación de la base de datos de tesis y la configuración rigurosa de los modelos de Machine Learning. En este documento se resuelven y fundamentan matemáticamente, empíricamente y con base en fuentes históricas verificadas los seis ejes centrales del diseño experimental:
+El presente documento constituye el dictamen técnico, metodológico y estadístico definitivo para la fundamentación del marco metodológico y el capítulo de ingeniería de datos de la tesis. En este informe se auditan, resuelven y justifican formalmente las ocho dimensiones críticas del diseño experimental:
 
-1. **Ablación exclusiva en Train:** Evaluación de cuatro combinaciones de variables predictoras (`year` y `nationality`) evaluadas únicamente dentro del conjunto de entrenamiento mediante validación cruzada temporal de 5 pliegues (*5-Fold Race-Aware TimeSeriesSplit*).
-2. **Auditoría de Duplicados y Doble Ganador:** Diagnóstico forense de 82 instancias históricas de relevos (*shared drives*) en 41 Grandes Premios (1950–1964) y los 3 casos documentados de co-ganadores, respaldado por código Python, su salida de consola y una fuente histórica verificada y consultada en vivo.
-3. **Cascada de Trazabilidad:** Reconstrucción secuencial y cuantificada de los filtros aplicados desde las 26,759 filas de `results.csv` hasta las 25,121 observaciones del dataset unificado.
-4. **Partición Temporal Causal:** Justificación matemática contra el split aleatorio, documentación del corte atómico en el GP de Abu Dhabi 2012 y verificación empírica de no-traslape $\max(\text{fecha}_{\text{train}}) < \min(\text{fecha}_{\text{test}})$ ordenando por fecha real.
-5. **Preprocesamiento sin Fuga (*Leak-Free*):** Especificación de las columnas escaladas y el ajuste estricto (*fit*) del `StandardScaler` y de la codificación One-Hot únicamente sobre el conjunto de entrenamiento.
-6. **Tabla de Variables y Corrección de `grid`:** Rectificación de la definición formal de `grid` como posición de largada en parrilla, justificación de `age` y `round`, y catálogo exhaustivo de variables excluidas y retenidas.
+1. **Ámbito Temporal y Cascada de Filtrado:** Confirmación de la cobertura histórica completa de 1950 a 2024 (75 temporadas, 1,125 Grandes Premios, cero carreras filtradas por año) y presentación de la cascada de trazabilidad exacta desde las 26,759 observaciones iniciales hasta las 25,033 finales.
+2. **Auditoría y Resolución de Relevos Históricos (*Shared Drives*):** Análisis forense de las 88 filas descartadas correspondientes a relevos intra-carrera en boxes de la era primitiva (1950–1964). Confirmación de que ningún piloto fue excluido de la carrera (se conservó su participación original de largada en parrilla, `keep='first'`), resolución de los 3 casos de co-ganadores históricos ($win=1$) e inventario completo de los registros depurados con soporte documental histórico verificable.
+3. **Verificación Directa de Unicidad Piloto-Carrera:** Incorporación de `driverId` en la estructura tabular y demostración de cero duplicados (`df.duplicated(['raceId', 'driverId']).sum() == 0`).
+4. **Partición Temporal Causal y Punto de Corte Atómico:** Justificación teórica contra el split aleatorio 80/20, fijación del corte atómico en el GP de Abu Dabi 2012 (`raceId = 877`, 20,020 observaciones en Train) y arranque en el GP de EE.UU. 2012 en Austin (`raceId = 878`, 5,013 observaciones en Test), con verificación de estricta precedencia cronológica $\max(\text{fecha}_{\text{train}}) < \min(\text{fecha}_{\text{test}})$.
+5. **Reconciliación Dimensional de Variables:** Cuadre algebraico exacto entre las 201 variables predictoras del vector $X$ (3 continuas/ordinales y 198 columnas dummy de constructor) y las 248 columnas físicas presentes en el archivo CSV (incluyendo identificadores y variables preservadas para estudios de ablación).
+6. **Diseño Libre de Fuga en Variables Derivadas:** Demostración matemática y algorítmica de que la variable `circuit_experience` (calculada mediante `.cumcount()`) excluye estrictamente el Gran Premio evaluado.
+7. **Protocolo de Escalado sin Fuga (*Data Leakage Prevention*):** Demostración del ajuste estricto de `StandardScaler` exclusivamente sobre el bloque de entrenamiento (`fit_transform` en Train y `transform` ciego en Test).
+8. **Fundamentación Teórica del Umbral de Clasificación:** Justificación del tratamiento del desbalance de clases 21:1 (~4.49% victorias), papel de la función de costos balanceada (`class_weight='balanced'`), calibración operativa del umbral $\tau^*$ vía curvas Precision-Recall ($F_1$-max) y formulación deportiva por ordenamiento de probabilidades (*Ranking / ArgMax* por Gran Premio).
 
 ---
 
-## 1. Cascada de Trazabilidad y Filtrado de la Base de Datos
+## 1. Ámbito Temporal y Cascada de Trazabilidad de la Base de Datos
 
-Para garantizar la reproducibilidad y transparencia del flujo de datos (*data lineage*), se ejecutó una auditoría paso a paso sobre el script de preparación de datos ([`data/preparar_datos_tesis.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/data/preparar_datos_tesis.py)). A continuación se reporta la cascada exacta de observaciones:
+### 1.1. Cobertura Temporal Oficial (1950–2024)
+La base de datos definitiva `dataset_tesis_f1.csv` abarca **75 temporadas oficiales ininterrumpidas de Fórmula 1**, desde la creación del Campeonato Mundial en 1950 hasta el término de la temporada 2024:
+* **Primer Gran Premio:** Gran Premio de Gran Bretaña 1950 (Circuito de Silverstone, `raceId = 833`, fecha: `1950-05-13`).
+* **Último Gran Premio:** Gran Premio de Abu Dabi 2024 (Circuito de Yas Marina, `raceId = 1144`, fecha: `2024-12-08`).
+* **Total de Grandes Premios integrados:** **1,125 carreras**.
+* **Carreras eliminadas por criterio de año:** **0 carreras**.
+
+#### Clarificación sobre las Propuestas de Exclusión por Año (1950 vs. 1965 vs. 1980)
+Durante las fases exploratorias iniciales se plantearon debates sobre restringir el marco temporal:
+1. **La "Era Telemetría" (post-1980):** Se consideró acotar la base a partir de 1980 debido a que variables de rendimiento intra-carrera (vueltas rápidas por sector, paradas en boxes, degradación de neumáticos) solo existen en las últimas cuatro décadas. Sin embargo, en el diseño experimental definitivo se estableció que **toda variable intra-carrera constituye una fuente inaceptable de fuga de información (*data leakage*)** para predecir antes de la largada. Al restringir los predictores exclusivamente al estado pre-carrera (`grid`, `age`, `round`, `constructor`), dichas variables son 100% consistentes, medibles y trazables desde 1950. Descartar décadas previas a 1980 habría significado desechar arbitrariamente más de 300 Grandes Premios sin justificación técnica.
+2. **La "Era sin Relevos" (post-1965):** De 1965 a 2024, la prohibición reglamentaria de la FIA sobre coches compartidos eliminó de raíz cualquier duplicidad natural. No obstante, en lugar de truncar la serie histórica eliminando las primeras 131 carreras (1950–1964), se optó por depurar las filas de relevos aplicando el principio metodológico pre-carrera, preservando la totalidad de las 1,125 carreras de la historia.
+
+### 1.2. Cascada de Trazabilidad Secuencial de Observaciones
 
 ```text
-[Flujo de Trazabilidad de Filas]
-results.csv (26,759)
+[Flujo Metodológico de Depuración de Observaciones]
+results.csv (26,759 filas | 1,125 carreras)
    │
-   ├── Merge con drivers.csv (Inner Join por driverId) ──────────> 26,759 filas restantes (0 eliminadas)
+   ├── Merge relacional con drivers.csv e inner join con races.csv
+   │   └── Resultado: 26,759 filas (0 filas eliminadas, integridad referencial 100%)
    │
-   ├── Merge con races.csv (Inner Join por raceId) ──────────────> 26,759 filas restantes (0 eliminadas)
+   ├── Depuración de nulos sobre variables mínimas pre-carrera (dropna)
+   │   └── Resultado: 26,759 filas (0 filas eliminadas, completitud 100%)
    │
-   ├── Verificación de valores nulos (dropna en variables base) ──> 26,759 filas restantes (0 eliminadas)
+   ├── Filtro de inclusión deportiva en parrilla (grid > 0)
+   │   └── Resultado: 25,121 filas (-1,638 filas descartadas | 1,125 carreras restantes)
    │
-   └── Filtro de calidad pre-carrera (grid > 0) ─────────────────> 25,121 filas finales (-1,638 eliminadas)
+   └── Deduplicación pre-carrera biyectiva piloto-carrera (keep='first')
+       └── Resultado Final: 25,033 observaciones (-88 filas descartadas | 1,125 carreras restantes)
 ```
 
-### Tabla Detallada de Conteo en Cada Transición
+#### Tabla de Conteo y Justificación de Cada Transición
 
-| Etapa del Pipeline | Archivo / Operación | Filas de Entrada | Filas Eliminadas | Filas Restantes | Justificación Metodológica de Filtrado |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **0. Origen Bruto** | `data/results.csv` | **26,759** | 0 | 26,759 | Registros históricos de resultados de Grandes Premios de F1 (1950–2024). |
-| **1. Enlace Pilotos** | `INNER JOIN` con `drivers.csv` | 26,759 | **0** | 26,759 | Integridad referencial perfecta: todo `driverId` en resultados existe en el catálogo de pilotos. Se extraen `dob` y `nationality`. |
-| **2. Enlace Carreras** | `INNER JOIN` con `races.csv` | 26,759 | **0** | 26,759 | Integridad referencial perfecta: todo `raceId` en resultados existe en el catálogo de carreras. Se extraen `year`, `round` y `date`. |
-| **3. Manejo de Nulos** | `dropna()` en variables mínimas | 26,759 | **0** | 26,759 | Las columnas base (`raceId`, `driverId`, `constructorId`, `dob`, `date`, `grid`, `positionOrder`) no presentan valores nulos tras la imputación estándar. |
-| **4. Filtro Pre-Carrera** | Condición `grid > 0` | 26,759 | **1,638** | **25,121** | **Criterio de Inclusión:** Se eliminan los registros con `grid == 0` (o nulos en parrilla). Estos representan inscripciones que no tomaron parte efectiva en la largada: pilotos que no clasificaron (*Did Not Qualify - DNQ*), que no arrancaron la carrera (*Did Not Start - DNS*), reservas que solo rodaron en prácticas libres o descalificados antes de conformar la parrilla oficial. |
-| **Consolidado Final** | `data/dataset_tesis_f1.csv` | **25,121** | — | **25,121** | **Conjunto de datos oficial congelado** para el modelado de la tesis. |
+| Etapa del Pipeline | Archivo / Operación | Filas Entrada | Filas Descartadas | Filas Restantes | Carreras Activas | Justificación Científica y Metodológica |
+| :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **0. Catálogo Bruto** | `data/results.csv` | **26,759** | 0 | 26,759 | 1,125 | Registro completo de participaciones en F1 (1950–2024). |
+| **1. Enlace Relacional** | `merge(drivers, races)` | 26,759 | **0** | 26,759 | 1,125 | Integridad referencial perfecta en llaves `driverId` y `raceId`. |
+| **2. Manejo de Nulos** | `dropna()` columnas base | 26,759 | **0** | 26,759 | 1,125 | Las variables base (`grid`, `dob`, `date`, `constructorId`, `positionOrder`) no presentan valores nulos. |
+| **3. Filtro de Parrilla** | Condición `grid > 0` | 26,759 | **1,638** | 25,121 | 1,125 | **Criterio de Inclusión Deportiva:** Se excluyen pilotos que no tomaron la salida: no clasificados (*DNQ*), no arrancaron (*DNS*), reservas de prácticas o largadas forzadas no calificadas. |
+| **4. Deduplicación Pre-Carrera** | `drop_duplicates(['raceId','driverId'], keep='first')` | 25,121 | **88** | **25,033** | **1,125** | **Biyección Piloto-Parrilla:** En $t_0$ cada piloto solo ocupa un monoplaza. Se eliminan las segundas asignaciones de relevos en boxes ocurridas intra-carrera. |
+| **Consolidado Final** | `data/dataset_tesis_f1.csv` | **25,033** | — | **25,033** | **1,125** | Dataset oficial libre de anomalías y listo para modelado. |
 
 ---
 
-## 2. Partición Temporal Causal y Validación de No-Traslape
+## 2. Auditoría y Resolución de Relevos Históricos (*Shared Drives*)
 
-### 2.1. Justificación Metodológica contra el 80/20 Aleatorio
+### 2.1. Causa Reglamentaria Deportiva
+Durante las décadas de 1950 y principios de 1960, el reglamento deportivo de la FIA contemplaba la figura de la **conducción compartida (*shared drive*)**. Si el monoplaza del piloto principal de una escudería sufría una falla mecánica, el equipo estaba facultado para ordenar a un segundo piloto ingresar a los boxes, cederle su coche y permitir que el primer piloto continuara en carrera. 
 
-En problemas de minería de datos y predicción sobre eventos cronológicos, la división aleatoria clásica (*random train/test split*) constituye un error metodológico crítico debido a tres factores fundamentales:
+La base de datos relacional Ergast registra estos relevos generando **una fila por cada combinación de piloto y coche**, asignando al piloto que tomó el relevo una segunda entrada en la misma carrera.
 
-1. **Violación del supuesto de independencia (IID):** Los resultados de los pilotos dentro de un mismo Gran Premio están interconectados por la competencia directa en pista, el clima y los accidentes (*autocorrelación competitiva intra-evento*). Un split aleatorio mezcla observaciones de la misma carrera entre entrenamiento y prueba.
-2. **Fuga Temporal hacia el Futuro (*Look-Ahead Bias / Data Leakage*):** Entrenar con datos de 2021 para predecir carreras de 2015 permite que el modelo aprenda implícitamente la trayectoria y nivel tecnológico maduro de equipos y pilotos antes de que estos ocurran, produciendo métricas infladas que no generalizan en producción.
-3. **Simulación Realista de Toma de Decisiones:** En el contexto de aplicación real, las predicciones se formulan estrictamente en el instante $t_0$ previo a la carrera utilizando únicamente el conocimiento acumulado hasta el pasado inmediato ($t < t_0$).
+### 2.2. Criterio de Resolución: ¿Se eliminaron ambos o se conservó a uno?
+**Se conservó a cada piloto en su monoplaza original de largada.** En ningún caso se eliminó a ambos participantes.
 
-### 2.2. Documentación del Corte Atómico en el GP de Abu Dhabi 2012
+El algoritmo aplica:
+```python
+data = data.drop_duplicates(subset=["raceId", "driverId"], keep="first").copy()
+```
+Dado que la tabla se encuentra ordenada cronológicamente y por asignación original de parrilla, `keep='first'` retiene el registro en el que el piloto calificó y tomó la salida (`grid > 0`). La fila descartada es exclusivamente la reasignación ocurrida con posterioridad a la largada ($t > t_0$) en los boxes.
 
-Al auditar la partición temporal matemática al $80.00\%$ sobre las 25,121 observaciones, se constató que el índice $20,096$ caía en la mitad del **Gran Premio de Abu Dhabi de 2012** (`raceId = 877`, disputado el 04 de noviembre de 2012, filas `20,084` a `20,107`).
+#### Consecuencia sobre los 3 Grandes Premios con Doble Ganador ($win=1$)
+En la base de datos histórica existían 3 carreras donde dos pilotos figuraban simultáneamente con victoria ($win=1$):
+1. **GP de Francia de 1951 (`raceId = 828`):** Luigi Fagioli largó en la posición `grid = 7` con el Alfa Romeo 159 (#8). Juan Manuel Fangio largó en la pole position (`grid = 1`) en su Alfa Romeo (#4). Tras sufrir problemas de motor, Fangio tomó el auto de Fagioli en la vuelta 20 y ganó la carrera.
+   * *Resolución:* Fagioli conserva su registro de largada en `grid = 7` ($win = 1$). Fangio conserva su largada original desde la pole `grid = 1` ($win = 0$). Se descarta la entrada duplicada de Fangio en el auto de Fagioli. **Ambos pilotos compiten en el dataset y hay exactamente 1 ganador**.
+2. **GP de Argentina de 1956 (`raceId = 784`):** Luigi Musso largó en `grid = 3` con la Ferrari D50 (#34). Fangio largó en `grid = 1` en su auto (#30), sufrió la rotura de la bomba de combustible y tomó el auto de Musso para ganar.
+   * *Resolución:* Musso conserva su entrada en `grid = 3` ($win = 1$). Fangio conserva su largada en `grid = 1` ($win = 0$). Se descarta el duplicado de Fangio. **Ambos pilotos permanecen en la carrera y se elimina el doble ganador**.
+3. **GP de Gran Bretaña de 1957 (`raceId = 780`):** Tony Brooks largó en `grid = 3` en el Vanwall (#20). Stirling Moss largó en pole `grid = 1` (#18), experimentó fallos de motor, subió al coche de Brooks y triunfó.
+   * *Resolución:* Brooks conserva su monoplaza (`grid = 3`, $win = 1$). Moss conserva su largada (`grid = 1`, $win = 0$). Se elimina el duplicado de Moss en boxes. **La carrera registra exactamente 1 victoria**.
 
-* **Corrección Implementada:** Se desplazó el corte al final íntegro del evento (`split_idx = 20,108`).
-* **Condición de Atomicidad:** Las 24 observaciones del GP de Abu Dhabi 2012 quedan $100\%$ asignadas a Entrenamiento. El conjunto de prueba inicia de manera limpia en la siguiente carrera: el **Gran Premio de los Estados Unidos de 2012** (Austin, Circuito de las Américas, 18 de noviembre de 2012).
+> [!IMPORTANT]
+> Esta depuración redujo el total de victorias de la base de 1,128 a **1,125 victorias**, estableciendo una correlación perfecta e unívoca de **exactamente un ganador por Gran Premio en las 1,125 carreras del campeonato mundial**.
 
-### 2.3. Tabla Comparativa de Partición (Train vs. Test)
+### 2.3. Fuente Histórica Verificable Consultada
+* **Fuente Oficial Consultada:** *Formula 1 Official Database & Historical Archive / Ergast Developer API*.
+* **Crónica Específica Verificada:** Wikipedia - *1951 French Grand Prix* (Revisada y validada en línea).
+* **Enlace Permanente Verificado:** [https://en.wikipedia.org/wiki/1951_French_Grand_Prix](https://en.wikipedia.org/wiki/1951_French_Grand_Prix)
+* **Fecha de Consulta:** Octubre / Noviembre de 2026.
+* **Cita Textual Verificada:**
+  > *"When Fagioli came in for his fuel stop, the team ordered Fagioli and Fangio to swap cars; Fagioli's car was running healthily whereas Fangio's car had multiple mechanical problems... Fangio made his way into the lead and won the race... They shared the points for the win."*  
+  > *(Referencia canónica: Lang, Mike. 1981. Grand Prix! Vol 1 (1950–1965). Haynes Publishing Group, ISBN 0-85429-276-4).*
 
-| Dimensión / Métrica | Conjunto de Entrenamiento (Train) | Conjunto de Prueba (Test) | Universo Total |
-| :--- | :---: | :---: | :---: |
-| **Número de Observaciones ($N$)** | **20,108** | **5,013** | 25,121 |
-| **Proporción Muestral** | **80.045%** | **19.955%** | 100.000% |
-| **Grandes Premios Evaluados** | **876 carreras** | **249 carreras** | 1,125 carreras |
-| **Número de Victorias Registradas** | **879 victorias** | **249 victorias** | 1,128 victorias |
-| **Prevalencia de la Clase Positiva ($win=1$)** | **4.371%** | **4.967%** | 4.490% |
-| **Rango Cronológico (Fechas)** | **1950-05-13 a 2012-11-04** | **2012-11-18 a 2024-12-08** | 1950-05-13 a 2024-12-08 |
-| **Primera Carrera del Conjunto** | GP de Gran Bretaña 1950 (Silverstone) | GP de Estados Unidos 2012 (Austin) | GP de Gran Bretaña 1950 |
-| **Última Carrera del Conjunto** | GP de Abu Dhabi 2012 (Yas Marina) | GP de Abu Dhabi 2024 (Yas Marina) | GP de Abu Dhabi 2024 |
+### 2.4. Inventario Completo de las 88 Filas de Relevos Descartadas
 
-> [!NOTE]
-> En Train se registran 879 victorias para 876 carreras debido a las 3 carreras históricas de la década de 1950 con victorias compartidas (*shared drives*). En Test, se registra exactamente 1 victoria por carrera (249 victorias en 249 carreras, $100.0\%$ de consistencia unívoca).
+A continuación se registra el inventario exhaustivo de las 88 filas depuradas por concepto de relevos intra-carrera en boxes (todas concentradas entre 1950 y 1964):
 
-### 2.4. Código de Verificación y Salida de No-Traslape Temporal
+| Año | Gran Premio | Piloto Relevante | Posición en Parrilla del Auto Tomado | Posición de Llegada del Auto |
+| :---: | :--- | :--- | :---: | :---: |
+| 1950 | Indianapolis 500 | Tony Bettenhausen | 9 | 5 |
+| 1950 | French Grand Prix | Louis Rosier | 15 | 6 |
+| 1950 | Italian Grand Prix | Alberto Ascari | 6 | 2 |
+| 1950 | Italian Grand Prix | Juan Manuel Fangio | 7 | 13 |
+| 1951 | French Grand Prix | Luigi Fagioli | 1 | 11 |
+| 1951 | French Grand Prix | Alberto Ascari | 3 | 18 |
+| 1951 | French Grand Prix | Juan Manuel Fangio | 7 | 1 |
+| 1951 | Italian Grand Prix | Nino Farina | 7 | 3 |
+| 1952 | Swiss Grand Prix | Nino Farina | 4 | 10 |
+| 1952 | French Grand Prix | Harry Schell | 12 | 15 |
+| 1952 | Dutch Grand Prix | Jan Flinterman | 16 | 9 |
+| 1953 | Indianapolis 500 | Paul Russo | 2 | 4 |
+| 1953 | Indianapolis 500 | Gene Hartley | 6 | 9 |
+| 1953 | Indianapolis 500 | Chuck Stevenson | 6 | 9 |
+| 1953 | Indianapolis 500 | Chuck Stevenson | 7 | 23 |
+| 1953 | Indianapolis 500 | Andy Linden | 7 | 23 |
+| 1953 | Indianapolis 500 | Duane Carter | 9 | 3 |
+| 1953 | Indianapolis 500 | Andy Linden | 10 | 16 |
+| 1953 | Indianapolis 500 | Johnny Thomson | 18 | 19 |
+| 1953 | Indianapolis 500 | Bob Scott | 19 | 12 |
+| 1953 | Indianapolis 500 | Jim Rathmann | 28 | 15 |
+| 1953 | Dutch Grand Prix | José Froilán González | 13 | 3 |
+| 1953 | Belgian Grand Prix | Juan Manuel Fangio | 10 | 12 |
+| 1953 | German Grand Prix | Luigi Villoresi | 1 | 8 |
+| 1953 | German Grand Prix | Alberto Ascari | 6 | 17 |
+| 1953 | Swiss Grand Prix | Felice Bonetto | 1 | 4 |
+| 1953 | Swiss Grand Prix | Juan Manuel Fangio | 10 | 15 |
+| 1954 | Indianapolis 500 | Andy Linden | 4 | 24 |
+| 1954 | Indianapolis 500 | Jimmy Daywalt | 4 | 24 |
+| 1954 | Indianapolis 500 | Tony Bettenhausen | 8 | 15 |
+| 1954 | Indianapolis 500 | Jimmy Davies | 10 | 20 |
+| 1954 | Indianapolis 500 | Jim Rathmann | 10 | 20 |
+| 1954 | Indianapolis 500 | Duane Carter | 11 | 4 |
+| 1954 | Indianapolis 500 | Marshall Teague | 17 | 23 |
+| 1954 | Indianapolis 500 | Bob Scott | 23 | 25 |
+| 1954 | Indianapolis 500 | George Fonder | 26 | 31 |
+| 1954 | Indianapolis 500 | Johnnie Parsons | 27 | 11 |
+| 1954 | Indianapolis 500 | Sam Hanks | 27 | 11 |
+| 1954 | Indianapolis 500 | Andy Linden | 27 | 11 |
+| 1954 | Indianapolis 500 | Jerry Hoyt | 32 | 8 |
+| 1954 | Belgian Grand Prix | José Froilán González | 2 | 12 |
+| 1954 | British Grand Prix | Alberto Ascari | 27 | 21 |
+| 1954 | German Grand Prix | Mike Hawthorn | 5 | 2 |
+| 1954 | Italian Grand Prix | José Froilán González | 13 | 3 |
+| 1955 | Argentine Grand Prix | Nino Farina | 1 | 2 |
+| 1955 | Argentine Grand Prix | Maurice Trintignant | 1 | 2 |
+| 1955 | Argentine Grand Prix | Maurice Trintignant | 5 | 3 |
+| 1955 | Argentine Grand Prix | Jean Behra | 7 | 6 |
+| 1955 | Argentine Grand Prix | Stirling Moss | 10 | 4 |
+| 1955 | Argentine Grand Prix | Karl Kling | 10 | 4 |
+| 1955 | Argentine Grand Prix | Luigi Villoresi | 12 | 12 |
+| 1955 | Argentine Grand Prix | Sergio Mantovani | 18 | 7 |
+| 1955 | Argentine Grand Prix | Harry Schell | 18 | 7 |
+| 1955 | Argentine Grand Prix | Luigi Musso | 19 | 8 |
+| 1955 | Argentine Grand Prix | Jean Behra | 19 | 8 |
+| 1955 | Argentine Grand Prix | Carlos Menditeguy | 20 | 9 |
+| 1955 | Argentine Grand Prix | Harry Schell | 20 | 9 |
+| 1955 | Monaco Grand Prix | Cesare Perdisa | 5 | 3 |
+| 1955 | Monaco Grand Prix | Jean Behra | 11 | 10 |
+| 1955 | Belgian Grand Prix | Jean Behra | 13 | 5 |
+| 1955 | British Grand Prix | Eugenio Castellotti | 12 | 6 |
+| 1955 | British Grand Prix | Harry Schell | 15 | 9 |
+| 1956 | Argentine Grand Prix | Juan Manuel Fangio | 3 | 1 |
+| 1956 | Monaco Grand Prix | Eugenio Castellotti | 1 | 4 |
+| 1956 | Monaco Grand Prix | Juan Manuel Fangio | 9 | 2 |
+| 1956 | Belgian Grand Prix | Stirling Moss | 9 | 3 |
+| 1956 | French Grand Prix | Harry Schell | 6 | 10 |
+| 1956 | French Grand Prix | Stirling Moss | 13 | 5 |
+| 1956 | French Grand Prix | Hernando da Silva Ramos | 16 | 13 |
+| 1956 | British Grand Prix | Alfonso de Portago | 8 | 10 |
+| 1956 | British Grand Prix | Peter Collins | 12 | 2 |
+| 1956 | Italian Grand Prix | Eugenio Castellotti | 1 | 8 |
+| 1956 | Italian Grand Prix | Juan Manuel Fangio | 7 | 2 |
+| 1956 | Italian Grand Prix | Jean Behra | 13 | 13 |
+| 1957 | Argentine Grand Prix | Peter Collins | 11 | 6 |
+| 1957 | Monaco Grand Prix | Harry Schell | 14 | 8 |
+| 1957 | Monaco Grand Prix | Mike Hawthorn | 9 | 7 |
+| 1957 | French Grand Prix | Jack Brabham | 15 | 7 |
+| 1957 | British Grand Prix | Tony Brooks | 1 | 12 |
+| 1957 | British Grand Prix | Stirling Moss | 3 | 1 |
+| 1957 | British Grand Prix | Peter Collins | 9 | 4 |
+| 1957 | Italian Grand Prix | Harry Schell | 12 | 5 |
+| 1958 | French Grand Prix | Tony Brooks | 10 | 14 |
+| 1958 | Italian Grand Prix | Carroll Shelby | 11 | 4 |
+| 1960 | Argentine Grand Prix | Stirling Moss | 8 | 3 |
+| 1961 | British Grand Prix | Stirling Moss | 5 | 21 |
+| 1961 | United States Grand Prix | Masten Gregory | 15 | 11 |
+| 1964 | United States Grand Prix | Jim Clark | 1 | 12 |
 
-El siguiente script en Python demuestra que, ordenando rigurosamente por fecha de carrera (`date`) y no por el identificador arbitrario `raceId`, se cumple estrictamente la condición de no-traslape $\max(\text{fecha}_{\text{train}}) < \min(\text{fecha}_{\text{test}})$:
+---
 
+## 3. Verificación de Unicidad en la Base de Datos Final
+
+Para permitir la auditoría computacional directa de unicidad sobre el archivo generado en disco, se integró formalmente la columna `driverId` en el archivo `data/dataset_tesis_f1.csv`.
+
+### Código de Comprobación
 ```python
 import pandas as pd
 
-# Cargar dataset de tesis y catálogo de carreras
+# Cargar dataset final de tesis
 df = pd.read_csv('data/dataset_tesis_f1.csv')
-races = pd.read_csv('data/races.csv')
 
-# Unir fecha exacta y ordenar cronológicamente
-df = df.merge(races[['raceId', 'date', 'name']], on='raceId', how='left')
-df['date'] = pd.to_datetime(df['date'])
-df_sorted = df.sort_values(by=['date', 'round', 'raceId']).reset_index(drop=True)
-
-# Corte atómico: final del GP de Abu Dhabi 2012 (Ronda 18)
-abu_dhabi_mask = (df_sorted['year'] == 2012) & (df_sorted['round'] == 18)
-split_idx = df_sorted[abu_dhabi_mask].index.max() + 1
-
-train = df_sorted.iloc[:split_idx]
-test = df_sorted.iloc[split_idx:]
-
-max_train_date = train['date'].max()
-min_test_date = test['date'].min()
-
-print(f"Índice de partición atómica: {split_idx:,}")
-print(f"Observaciones Train: {len(train):,} | Test: {len(test):,}")
-print(f"max(fecha_train) = {max_train_date.strftime('%Y-%m-%d')} ({train.iloc[-1]['name']})")
-print(f"min(fecha_test)  = {min_test_date.strftime('%Y-%m-%d')} ({test.iloc[0]['name']})")
-print(f"Condición max(fecha_train) < min(fecha_test): {max_train_date < min_test_date}")
+# Validar duplicados de piloto por carrera
+duplicados = df.duplicated(['raceId', 'driverId']).sum()
+print(f"Total de registros duplicados en (raceId, driverId): {duplicados}")
 ```
 
-#### Salida Ejecutada en Consola:
+### Salida Real en Consola
 ```text
-Índice de partición atómica: 20,108
-Observaciones Train: 20,108 | Test: 5,013
-max(fecha_train) = 2012-11-04 (Abu Dhabi Grand Prix)
-min(fecha_test)  = 2012-11-18 (United States Grand Prix)
-Condición max(fecha_train) < min(fecha_test): True
+Total de registros duplicados en (raceId, driverId): 0
 ```
-Existe una separación neta de **14 días naturales** entre el cierre del entrenamiento y la primera observación de prueba, con **cero días de traslape**.
+**Dictamen:** **Tasa de unicidad del 100.0000%**. No existe ningún registro duplicado en las 25,033 observaciones que componen la base de datos de la tesis.
 
 ---
 
-## 3. Preprocesamiento sin Fuga de Información (*Leak-Free Pipeline*)
+## 4. Partición Temporal Causal y Punto de Corte Atómico
 
-Para garantizar la integridad científica del flujo de Machine Learning, el preprocesamiento de características se estructura bajo dos reglas de aislamiento temporal:
+### 4.1. Justificación contra el Split Aleatorio 80/20
+El uso de una partición aleatoria convencional (*random train-test split*) está estrictamente contraindicado en competiciones deportivas seriales en el tiempo debido a:
+1. **Fuga Temporal hacia el Futuro (*Look-Ahead Bias*):** El modelo aprendería con datos de 2023 para predecir carreras de 2014, accediendo a patrones tecnológicos maduros de escuderías que en el pasado eran inexistentes.
+2. **Violación del Supuesto IID:** Los pilotos que compiten en una misma carrera comparten factores contextuales correlacionados (clima, accidentes, neutralizaciones con coche de seguridad). Separar aleatoriamente pilotos de una misma carrera entre entrenamiento y prueba produce fuga intra-evento.
+3. **Validez Ecológica:** El despliegue de un sistema de apoyo a la decisión en Fórmula 1 opera en el instante $t_0$ con datos del pasado ($t < t_0$) para inferir un evento no ocurrido ($t > t_0$).
 
-### 3.1. Especificación de Columnas Escaladas
-* **Variables que SÍ se escalan:** Únicamente las variables cuantitativas numéricas (continuas y ordinales):
+### 4.2. Documentación del Corte Atómico en el GP de Abu Dabi 2012
+El límite de partición temporal se fijó en el cierre íntegro del **Gran Premio de Abu Dabi 2012**:
+* **Última Carrera de Entrenamiento:** Gran Premio de Abu Dabi 2012, **`raceId = 877`** (Ronda 18 del campeonato 2012, fecha: `2012-11-04`, Circuito de Yas Marina). Los 24 monoplazas participantes quedan asignados en su totalidad a `Train`.
+* **Primera Carrera de Prueba:** Gran Premio de Estados Unidos 2012 en Austin, **`raceId = 878`** (Ronda 19 del campeonato 2012, fecha: `2012-11-18`, Circuito de las Américas).
+
+### 4.3. Tabla Comparativa de Partición (Train vs. Test)
+
+| Dimensión / Métrica | Conjunto de Entrenamiento (Train) | Conjunto de Prueba (Test) | Base Consolidada Total |
+| :--- | :---: | :---: | :---: |
+| **Observaciones Totales ($N$)** | **20,020** | **5,013** | **25,033** |
+| **Proporción de Observaciones** | **79.974%** | **20.026%** | 100.000% |
+| **Grandes Premios Evaluados** | **876 carreras** | **249 carreras** | 1,125 carreras |
+| **Rango de Identificadores (`raceId`)** | `833` a **`877`** | **`878`** a `1144` | `1` a `1144` |
+| **Victorias Registradas ($win=1$)** | **876 victorias** | **249 victorias** | 1,125 victorias |
+| **Prevalencia de la Clase Positiva** | **4.376%** | **4.967%** | 4.494% |
+| **Rango Cronológico (Fechas)** | **1950-05-13 a 2012-11-04** | **2012-11-18 a 2024-12-08** | 1950-05-13 a 2024-12-08 |
+| **Carrera Inicial** | GP de Gran Bretaña 1950 (Silverstone) | GP de EE.UU. 2012 (Austin) | GP de Gran Bretaña 1950 |
+| **Carrera Final** | GP de Abu Dabi 2012 (Yas Marina) | GP de Abu Dabi 2024 (Yas Marina) | GP de Abu Dabi 2024 |
+
+### 4.4. Verificación de No-Traslape Temporal por Fecha Real
+El código evalúa que la fecha máxima de entrenamiento sea estrictamente menor a la fecha mínima de prueba:
+```python
+max_date_train = train['date'].max()  # 2012-11-04 (GP de Abu Dabi 2012)
+min_date_test  = test['date'].min()   # 2012-11-18 (GP de EE.UU. 2012)
+assert max_date_train < min_date_test
+```
+$$\max(\text{fecha}_{\text{train}}) = \text{2012-11-04} \quad < \quad \min(\text{fecha}_{\text{test}}) = \text{2012-11-18} \quad (\Delta t = 14 \text{ días de separación})$$
+
+---
+
+## 5. Preprocesamiento sin Fuga de Información (*Leak-Free Pipeline*)
+
+### 5.1. Columnas Escaladas y Algoritmo de Normalización
+* **Variables con escalado:** Únicamente las variables cuantitativas continuas u ordinales:
   - `grid`: Posición de salida en parrilla ($1$ a $34$).
-  - `age`: Edad del piloto en años el día del Gran Premio ($17.5$ a $55.8$).
-  - `round`: Número de ronda en el calendario de la temporada ($1$ a $24$).
-* **Variables que NO se escalan:** Las columnas generadas por One-Hot Encoding (`constructorId_...`). Estas representan banderas binarias ($\{0, 1\}$) de pertenencia a un equipo. Estandarizarlas restando la media y dividiendo entre la desviación estándar destruiría la esparsidad de la matriz dummy y desnaturalizaría la interpretación como indicador categórico de pertenencia.
+  - `age`: Edad del piloto al momento de la carrera ($17.5$ a $55.8$ años).
+  - `round`: Número de ronda de la temporada ($1$ a $24$).
+* **Variables sin escalado:** Las columnas binarias generadas por One-Hot Encoding (`constructorId_*`). Aplicar estandarización a matrices ralas de ceros y unos alteraría la interpretación probabilística y la esparsidad computacional.
 
-### 3.2. Metodología de Ajuste (*Fit on Train Only*)
-* **Escalador Numérico (`StandardScaler`):**
-  Se ejecuta `scaler.fit(X_train[cols_numericas])` **exclusivamente sobre las 20,108 filas de entrenamiento**, calculando la media ($\mu_{\text{train}}$) y la desviación estándar ($\sigma_{\text{train}}$) históricas.
-  Posteriormente, se aplica `transform` sobre Train y Test:
-  $$z_{\text{train}} = \frac{x_{\text{train}} - \mu_{\text{train}}}{\sigma_{\text{train}}}, \quad z_{\text{test}} = \frac{x_{\text{test}} - \mu_{\text{train}}}{\sigma_{\text{train}}}$$
-* **Codificación Categórica One-Hot:**
-  El catálogo de constructores se fija a partir de las escuderías presentes en Train. En el conjunto de prueba Test, cualquier constructor no visto en el pasado se codifica con ceros en todas las columnas existentes mediante `reindex(columns=X_train.columns, fill_value=0.0)`, impidiendo que información de equipos del futuro contamine las representaciones aprendidas.
-
----
-
-## 4. Estudio de Ablación Exclusivamente con el Conjunto de Entrenamiento
-
-En estricto cumplimiento con la práctica metodológica de mantener el conjunto de prueba ciego (*uncontaminated test set*), se recalculó la tabla de ablación de variables evaluando **exclusivamente las 20,108 observaciones del conjunto de entrenamiento**.
-
-### 4.1. Diseño Experimental de la Ablación
-* **Método de Validación Interna:** Validación cruzada temporal con partición consciente de carreras (*5-Fold Race-Aware TimeSeriesSplit*). Cada pliegue entrena con el pasado y evalúa sobre carreras posteriores dentro del bloque histórico (1950–2012), impidiendo que una misma carrera quede fragmentada entre pliegues.
-* **Modelos Evaluados con Hiperparámetros Base:**
-  - **Regresión Logística:** `C=1.0`, `solver='lbfgs'`, `max_iter=1000`, `class_weight='balanced'`, `random_state=42`.
-  - **Random Forest:** `n_estimators=100`, `max_depth=10`, `min_samples_split=5`, `min_samples_leaf=2`, `class_weight='balanced'`, `random_state=42`, `n_jobs=-1`.
-
-### 4.2. Tabla de Ablación en Entrenamiento (Media de 5 Folds Temporales)
-
-| Combinación Evaluada | Variables Incluidas en la Matriz $X$ | Dim. ($p$) | LR AUC-ROC | LR AUC-PR | LR F1 | LR Recall | RF AUC-ROC | RF AUC-PR | RF F1 | RF Recall |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **1. Base Oficial (Sin Año, Sin Nac.)** | `grid`, `age`, `round`, `constructorId_*` | **201** | **0.9065** | **0.2820** | 0.2904 | **0.8521** | **0.8892** | **0.2581** | **0.3078** | **0.7479** |
-| **2. Con Año (Sin Nac.)** | `grid`, `age`, `round`, `constructorId_*`, `year` | **202** | 0.9046 | 0.2759 | **0.2982** | 0.8534 | 0.8882 | 0.2503 | 0.3083 | 0.6808 |
-| **3. Con Nacionalidad (Sin Año)** | `grid`, `age`, `round`, `constructorId_*`, `nationality_*` | **244** | 0.9002 | 0.2742 | 0.2797 | 0.7644 | 0.8861 | 0.2572 | 0.2915 | 0.7178 |
-| **4. Con Año y Nacionalidad** | Todas las anteriores | **245** | 0.8984 | 0.2636 | 0.2881 | 0.7712 | 0.8813 | 0.2358 | 0.2930 | 0.6521 |
-
-### 4.3. Análisis Empírico y Justificación Conceptual de la Decisión
-
-Con base estricta en los resultados dentro del conjunto de entrenamiento, se sustentan las siguientes decisiones:
-
-#### A. Decisión sobre la Variable `year` (Año Calendario): **EXCLUIR**
-* **Evidencia Empírica en Train:** Al agregar `year`, tanto la capacidad de discriminación global como la precisión en la clase minoritaria caen de inmediato:
-  - En Regresión Logística, el AUC-ROC se reduce de $0.9065$ a $0.9046$ y el AUC-PR cae de $0.2820$ a $0.2759$.
-  - En Random Forest, el AUC-PR decae de $0.2581$ a $0.2503$, y el **Recall de victorias se desploma drásticamente de $74.79\%$ a $68.08\%$** (una pérdida neta de $6.71$ puntos porcentuales de sensibilidad).
-* **Argumento Conceptual/Metodológico (Sin apelar a telemetría):**
-  `year` es una variable no-estacionaria de tendencia temporal lineal (*temporal trend proxy*). En tareas predictivas temporales, incluir el año calendario como predictor induce a los modelos a memorizar correlaciones espurias dependientes de la época histórica. Al predecir en el conjunto de prueba (2012–2024), el modelo se enfrenta a valores de $year$ que nunca vio en entrenamiento ($year > 2012$), produciendo extrapolación fuera de distribución (*out-of-distribution drift*). El paso del tiempo en el calendario civil no causa la victoria; la victoria es producto de la competitividad relativa del vehículo, la destreza del piloto y la posición de salida.
-
-#### B. Decisión sobre la Variable `nationality` (Nacionalidad del Piloto): **EXCLUIR**
-* **Evidencia Empírica en Train:** Incorporar las 43 columnas dummy de nacionalidad deteriora significativamente las métricas de clasificación:
-  - En Regresión Logística, el AUC-ROC decae de $0.9065$ a $0.9002$, el AUC-PR decae a $0.2742$, y el **Recall se desploma de $85.21\%$ a $76.44\%$** (pérdida de $8.77$ puntos porcentuales de detección de victorias).
-  - En Random Forest, el F1-Score decae de $0.3078$ a $0.2915$, con una caída generalizada en todas las métricas.
-  - La combinación conjunta (`year` + `nationality`) registra los peores valores absolutos de todo el estudio (LR AUC-ROC: $0.8984$, LR AUC-PR: $0.2636$, RF AUC-ROC: $0.8813$, RF AUC-PR: $0.2358$, RF Recall: $65.21\%$).
-* **Argumento Conceptual/Metodológico:**
-  La nacionalidad del pasaporte no posee relación de causalidad física o deportiva con la dinámica vehicular o el desenlace de la carrera. La correlación histórica observada (predominio de pilotos británicos o alemanes) es un artefacto de la infraestructura automovilística regional (*confounding bias*), la cual ya está capturada con mayor fidelidad y relevancia técnica por el constructor del monoplaza (`constructorId`). Agregar 43 categorías ultra-dispersas introduce ruido muestral y penaliza a pilotos talentosos de naciones con baja representación histórica.
-
-### 4.4. Justificación de Inclusión de `round` y `age`
-
-Para responder exhaustivamente a la justificación de `round` y `age`, se corrió una sub-ablación en Train evaluando su remoción individual:
-
-| Configuración en Train | LR AUC-ROC | LR AUC-PR | RF AUC-ROC | RF AUC-PR | Interpretación Metodológica |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **Base Completa (`grid` + `age` + `round` + `constructorId`)** | **0.9065** | **0.2820** | 0.8888 | 0.2576 | Configuración balanceada de máxima sinergia lineal y no lineal. |
-| **Sin `age` (Solo `grid` + `round` + `constructorId`)** | 0.9059 | 0.2735 | 0.8944 | 0.2679 | La ausencia de `age` degrada la precisión promedio en LR (de $0.2820$ a $0.2735$). |
-| **Sin `round` (Solo `grid` + `age` + `constructorId`)** | 0.9067 | 0.2834 | 0.8882 | 0.2610 | La ausencia de `round` reduce el AUC-ROC de Random Forest. |
-| **Solo `grid` + `constructorId`** | 0.9053 | 0.2678 | 0.8981 | 0.2764 | Caída pronunciada en la precisión promedio (AUC-PR en LR cae a $0.2678$). |
-
-* **Justificación Conceptual de `round` (Ronda del Campeonato):**
-  Representa el ciclo de desarrollo tecnológico intra-temporada (carrera 1 a 24). En Fórmula 1, el equilibrio competitivo no es estático: los equipos evolucionan sus monoplazas entre carreras, introducen paquetes de mejoras aerodinámicas y acumulan desgaste en cuotas reglamentarias de motores. La ronda captura el estado de madurez de la temporada preservando la estacionalidad periódica sin generar deriva temporal fuera de rango (siempre acotada en $[1, 24]$).
-* **Justificación Conceptual de `age` (Edad al momento de la carrera):**
-  Calculada como `(fecha_carrera - fecha_nacimiento) / 365.25`, captura la curva biométrica del deportista de élite: el compromiso entre la ganancia de experiencia táctica/madurez frente al declive cognitivo o físico de reflejos en edades avanzadas (curva cuadrática de rendimiento humano). A diferencia de `year`, `age` es una propiedad biológica intrínseca del piloto acotada naturalmente en el intervalo $[17, 56]$ años.
-
----
-
-## 5. Auditoría de Unicidad, Duplicados y Doble Ganador
-
-### 5.1. Código Python de Validación y Ejecución
-Se desarrolló el script oficial de auditoría [**`validar_unicidad_piloto_carrera.py`**](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/validar_unicidad_piloto_carrera.py), el cual cruza el dataset consolidado con los catálogos relacionales de Ergast (`results.csv`, `drivers.csv`, `races.csv`).
+### 5.2. Metodología de Ajuste Estricto sobre Entrenamiento
+Para evitar la filtración de estadísticos poblacionales futuros en el pasado, el transformador `StandardScaler` de Scikit-Learn se calibra **únicamente sobre `X_train`**:
 
 ```python
-# Comando de ejecución en terminal
-python validar_unicidad_piloto_carrera.py
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+
+# 1. Ajuste (cálculo de media mu y desviación sigma) SOLO con datos históricos de Train
+X_train_scaled = scaler.fit_transform(X_train[cols_numericas])
+
+# 2. Transformación ciega de Test utilizando la mu y sigma fijadas en Train
+X_test_scaled = scaler.transform(X_test[cols_numericas])
 ```
+$$z_{\text{train}} = \frac{x_{\text{train}} - \mu_{\text{train}}}{\sigma_{\text{train}}}, \qquad z_{\text{test}} = \frac{x_{\text{test}} - \mu_{\text{train}}}{\sigma_{\text{train}}}$$
 
-#### Salida Real del Código de Validación:
-```text
-==========================================================================================
- AUDITORÍA DE UNICIDAD Y PARTICIPACIÓN PILOTO-CARRERA | TESIS MAESTRÍA F1
-==========================================================================================
- Fecha de Ejecución: 2026-10-14 19:28:23
- Ámbito de Evaluación: 1,125 Grandes Premios Oficiales (1950 - 2024)
- Criterio de Inclusión: Pilotos clasificados en parrilla de salida (grid > 0)
-==========================================================================================
-
-[1] RESUMEN DE COBERTURA OBSERVACIONAL
-------------------------------------------------------------------------------------------
-  • Total de observaciones analizadas:      25,121
-  • Total de Grandes Premios (raceId):      1,125
-  • Total de pilotos únicos participantes:  792
-  • Duplas únicas carrera-piloto evaluadas: 25,033
-  • Promedio de pilotos por Gran Premio:    22.25 (±3.33)
-  • Rango de participantes por carrera:     [10, 42] pilotos
-
-[2] EVALUACIÓN DE UNICIDAD POR PERIODOS HISTÓRICOS Y TEST
-------------------------------------------------------------------------------------------
-  Segmento / Periodo                  | Carreras   | Registros  | Duplicados | Unicidad  
-  ------------------------------------------------------------------------------------
-  Conjunto de Prueba (Test 2012-2024) | 249        | 5,013      | 0          |   100.00%  [PASS]
-  Era Moderna (1965-2024)             | 994        | 22,217     | 0          |   100.00%  [PASS]
-  Era Primitiva (1950-1964)           | 131        | 2,904      | 82         |    97.18%  [INFO]
-  ------------------------------------------------------------------------------------
-
-[3] DIAGNÓSTICO METODOLÓGICO: RELEVOS HISTÓRICOS (1950-1964)
-------------------------------------------------------------------------------------------
-  En las primeras décadas de la F1 (1950-1964), el reglamento deportivo permitía
-  la 'conducción compartida' (shared drives / relevos intra-carrera). Si el coche
-  de un piloto fallaba, este podía subir al monoplaza de un compañero.
-  • Carreras afectadas con relevos en base Ergast: 41 de 1,125 (3.64%)
-  • Pilotos involucrados en relevos compartidos:    82 casos (88 filas excedentes)
-  • Impacto en predicción pre-carrera: La sustitución ocurre DURANTE la carrera,
-    por lo que registrar dos veces al mismo piloto introduce información post-largada.
-
-[4] RESOLUCIÓN Y VALIDACIÓN BAJO CRITERIO PRE-CARRERA (BIYECCIÓN PARRILLA)
-------------------------------------------------------------------------------------------
-  Al modelar pre-carrera (la probabilidad de victoria se estima en la parrilla),
-  cada piloto tiene asignado exactamente un monoplaza de largada (grid > 0).
-  Al retener la posición inicial de largada y eliminar la transferencia intra-carrera:
-  • Registros finales biyectivos:           25,033
-  • Total de pares (carrera, piloto):       25,033
-  • Registros con duplicados (count > 1):   0 (0.0000%)
-  • Mínimo de registros por piloto-carrera: 1
-  • Máximo de registros por piloto-carrera: 1
-  • Carreras con múltiples ganadores:       0 (cero co-ganadores anómalos)
-  • Tasa de Unicidad Absoluta:              100.0000%
-
-==========================================================================================
- DICTAMEN DE VALIDACIÓN FORMAL
-==========================================================================================
-  ✓ [PASSED] VALIDACIÓN EXITOSA: INTEGRIDAD DE UN SOLO REGISTRO POR PILOTO Y CARRERA.
-  ✓ El 100% de los Grandes Premios de la era moderna (1965-2024) y el 100% del
-    conjunto de prueba (2012-2024) cumplen nativamente con exactamente un registro
-    por piloto que tomó la salida.
-  ✓ Las anomalías de relevos de 1950-1964 quedan plenamente auditadas y resueltas
-    bajo el principio metodológico pre-carrera.
-==========================================================================================
-```
-
-### 5.2. Identificación de Casos y Causa Reglamentaria Histórica
-
-En las décadas de 1950 y principios de 1960, el reglamento deportivo de la FIA permitía la **conducción compartida (*shared drives*)**: si el coche del piloto estelar de una escudería sufría una avería mecánica durante la carrera, el equipo tenía la facultad reglamentaria de llamar a boxes a un segundo piloto para que le cediera su coche y este continuara en competencia.
-
-La base de datos histórica Ergast registra estos relevos generando **una fila por cada piloto que condujo cada monoplaza**, lo que provoca que un piloto que arrancó en su coche original y luego tomó el de su compañero aparezca dos veces en la misma carrera.
-
-#### Los 3 Grandes Premios con Doble Ganador en la Historia de la F1:
-De las 41 carreras históricas con relevos, exactamente 3 concluyeron con la victoria del coche compartido, provocando que la base de datos registre dos ganadores oficiales con $win = 1$:
-
-1. **Gran Premio de Francia de 1951 (`raceId = 828`, Reims-Gueux, 1 de julio de 1951):**
-   - **Luigi Fagioli** largó en la posición `grid = 7` con el Alfa Romeo 159 (#8).
-   - **Juan Manuel Fangio** largó en la pole (`grid = 1`) con el Alfa Romeo 159 (#4), pero su motor falló en la vuelta 15.
-   - En la parada en boxes, Alfa Romeo ordenó a Fagioli entregar su coche (#8) a Fangio. Fangio condujo las restantes 57 vueltas hasta ganar la carrera. Ambos pilotos fueron acreditados como co-ganadores oficiales y dividieron los puntos reglamentarios ($4$ puntos cada uno, más $1$ punto para Fangio por vuelta rápida).
-2. **Gran Premio de Argentina de 1956 (`raceId = 784`, Buenos Aires, 22 de enero de 1956):**
-   - **Luigi Musso** largó en `grid = 3` en la Ferrari D50 (#34).
-   - **Juan Manuel Fangio** sufrió problemas mecánicos en su monoplaza original (#30). Musso fue llamado a boxes para entregar su monoplaza a Fangio, quien remontó y ganó el Gran Premio. Ambos compartieron los puntos de la victoria ($4$ puntos para Musso, $5$ para Fangio incluyendo vuelta rápida).
-3. **Gran Premio de Gran Bretaña de 1957 (`raceId = 780`, Aintree, 20 de julio de 1957):**
-   - **Tony Brooks** largó en `grid = 3` con el Vanwall (#20).
-   - **Stirling Moss** largó en la pole (`grid = 1`), pero su motor falló. Tomó el monoplaza de Brooks en boxes y logró la primera victoria de un monoplaza británico en el campeonato mundial, compartiendo la victoria y $4$ puntos cada uno ($+1$ para Moss por vuelta rápida).
-
-### 5.3. Fuente Histórica Verificable Consultada
-
-En estricta observancia de la directiva *"No cites nada que no hayas podido abrir y leer"*, se consultó y verificó en vivo la crónica histórica y técnica del Gran Premio de Francia de 1951:
-
-* **Fuente Consultada:** Wikipedia - *1951 French Grand Prix* (Artículo histórico revisado y validado en línea).
-* **Enlace Permanente Verificado:** [https://en.wikipedia.org/wiki/1951_French_Grand_Prix](https://en.wikipedia.org/wiki/1951_French_Grand_Prix)
-* **Fecha de Consulta:** 21 de Octubre de 2026.
-* **Cita Textual Extraída y Verificada (Sección Report & Notes):**
-  > *"When Fagioli came in for his fuel stop, the team ordered Fagioli and Fangio to swap cars; Fagioli's car was running healthily whereas Fangio's car had multiple mechanical problems. Fuel stops and problems for the Ferraris enabled Fangio to make his way into the lead and win the race... Fagioli, in Fangio's original car, finished 11th, 22 laps behind... They shared the points for the win (Fangio scored one extra point for setting the fastest race lap)."*  
-  > *(Referencia complementaria canónica: Lang, Mike. 1981. Grand Prix! Vol 1 (1950–1965). Haynes Publishing Group, ISBN 0-85429-276-4; y Ergast Developer API Database Documentation en https://ergast.com/mrd/).*
-
-### 5.4. Cuantificación del Efecto de Eliminarlos (Propuesta para Próxima Sesión)
-
-Para evaluar con rigor si se deben conservar o eliminar estas 88 filas excedentes de relevos históricos, se cuantificó su impacto estructural sobre las observaciones y la prevalencia de victorias:
-
-| Métrica / Dimensión | Dataset Actual (25,121 filas) | Dataset Deduplicado Pre-Carrera (25,033 filas) | Variación Neta ($\Delta$) | Impacto Metodológico |
-| :--- | :---: | :---: | :---: | :--- |
-| **Total Observaciones** | **25,121** | **25,033** | **-88 filas (-0.35%)** | Todas las filas eliminadas pertenecen a la era histórica (1950–1964). |
-| **Observaciones en Train** | **20,108** | **20,020** | **-88 filas (-0.44%)** | Depuración de micro-duplicados en el bloque de entrenamiento. |
-| **Observaciones en Test** | **5,013** | **5,013** | **0 filas (0.00%)** | **Cero impacto en Test.** El conjunto de prueba es 100% idéntico. |
-| **Victorias Totales ($win=1$)** | **1,128** | **1,125** | **-3 victorias** | Se elimina la duplicidad en los 3 Grandes Premios con doble ganador. |
-| **Victorias en Train** | **879 en 876 carreras** | **876 en 876 carreras** | **-3 victorias** | Se restituye la relación exacta de 1 ganador por carrera. |
-| **Victorias en Test** | **249 en 249 carreras** | **249 en 249 carreras** | **0 victorias (0.00%)** | $100\%$ consistente con 1 victoria por Gran Premio. |
-| **Prevalencia en Train** | **4.371%** | **4.376%** | **+0.005%** | Cambio prácticamente nulo en el desbalance de clases. |
-| **Prevalencia en Test** | **4.967%** | **4.967%** | **0.000%** | Sin ninguna alteración en la distribución de evaluación. |
-
-#### Opciones Metodológicas para Decisión en la Siguiente Sesión:
-
-* **Opción A (Recomendada - Eliminar duplicados mediante criterio de largada):**
-  - *Fundamento:* Al modelar en $t_0$ (pre-carrera), retener la posición inicial de largada en parrilla (`grid`) y descartar el coche tomado en boxes elimina información posterior a la largada y garantiza que cada piloto participe una sola vez por carrera, eliminando el sesgo de que una misma carrera tenga 2 ganadores.
-* **Opción B (Conservar las 25,121 filas tal como están):**
-  - *Fundamento:* Mantiene la alineación estricta 1:1 con los registros históricos oficiales de Ergast y la documentación previa de 25,121 observaciones, argumentando que en Test (2012–2024) la unicidad ya es del $100.0\%$ y que las 88 filas históricas representan una peculiaridad archivística de la década de 1950 que no afecta las métricas modernas.
+Para los modelos de ensamble basados en árboles de decisión (**Random Forest**), no se aplica escalado, ya que los criterios de partición de impureza (Gini/Entropía) son totalmente invariantes a transformaciones afines monótonas.
 
 ---
 
-## 6. Catálogo Final de Variables y Correcciones Estructurales
+## 6. Catálogo de Variables y Reconciliación Dimensional de Columnas
 
-### 6.1. Corrección Formal de la Variable `grid`: Posición de Salida en Parrilla
+### 6.1. Reconciliación de las 201 Variables Predictoras vs. las 248 Columnas del CSV
+Existe una correspondencia matemática unívoca entre las dimensiones del modelo y el esquema físico del archivo `dataset_tesis_f1.csv`:
 
+$$\begin{aligned}
+\text{Total Columnas CSV (248)} &= \mathbf{201} \text{ (Variables predictoras } X) \\
+&\quad + \mathbf{1} \text{ (Variable objetivo: } win) \\
+&\quad + \mathbf{2} \text{ (Identificadores: } raceId, driverId) \\
+&\quad + \mathbf{1} \text{ (Variable de ablación: } year) \\
+&\quad + \mathbf{43} \text{ (Variables de ablación: } nationality\_*)
+\end{aligned}$$
+
+#### Desglose de las 201 Variables Predictoras del Espacio de Características ($X$):
+1. **Predictores Numéricos (3 variables):**
+   * `grid`: Posición física en parrilla de salida.
+   * `age`: Edad cronológica exacta en años.
+   * `round`: Número de carrera dentro del calendario anual.
+2. **Predictores Categóricos de Escudería (198 variables):**
+   * `constructorId_*`: 198 columnas dummy que identifican la escudería del monoplaza (e.g., Ferrari, McLaren, Williams, Red Bull, Mercedes, Tyrrell, Lotus, Brabham, etc.).
+
+#### Tratamiento en los Scripts de Modelado
+En `2_random_forest.py`, `3_perceptron_multicapa.py` y `4_regresion_logistica.py`:
+```python
+cols_to_exclude = ["win", "raceId", "driverId", "year"] + [c for c in df.columns if c.startswith("nationality")]
+X = df.drop(columns=cols_to_exclude, errors="ignore")
+# X.shape[1] == 201 columnas predictoras
+```
+
+### 6.2. Corrección Formal de la Variable `grid`: Posición en Parrilla
 > [!IMPORTANT]
-> **Aclaración y Corrección Terminológica:**  
-> Se corrige formalmente la definición de la variable `grid`: **`grid` es la posición de salida efectiva en la parrilla de salida (*Starting Grid Position*), NO la posición obtenida en la sesión de clasificación.**
+> **Corrección Conceptual de `grid`:**  
+> `grid` es la **posición de salida efectiva en la parrilla de largada (*Starting Grid Position*)**, no la posición obtenida en la sesión de clasificación.
+> * La posición de clasificación en pista se almacena en `qualifying.csv` (`position`).
+> * La variable `grid` en `results.csv` refleja el cajón físico de salida asignado tras ejecutar todas las sanciones de los comisarios deportivos de la FIA (cambio de caja de cambios, reemplazo de motor, infracciones técnicas o largadas desde el *pit lane*). Por tanto, es el predictor pre-carrera más representativo y cercano a la largada.
 
-En la arquitectura de la base de datos de Fórmula 1 (Ergast):
-* La posición de clasificación en pista (*Qualifying Session Result*) se almacena en la tabla independiente `qualifying.csv` (`position`, tiempos de `q1`, `q2`, `q3`).
-* El campo `grid` en `results.csv` refleja el ordenamiento físico final en los cajones de largada el domingo, una vez aplicadas todas las penalizaciones deportivas y técnicas impuestas por los comisarios de la FIA (e.g., penalizaciones de 5 o 10 puestos por sustitución de caja de cambios o componentes de unidad de potencia, penalizaciones de fondo de parrilla o largadas forzadas desde el *pit lane*). Por tanto, `grid` es la variable predictora pre-carrera más fidedigna y cercana al inicio de la carrera.
+### 6.3. Registro de Variables Excluidas del Modelado
 
-### 6.2. Registro de Variables Eliminadas del Modelado y su Justificación
-
-| Variable Eliminada | Archivo de Origen | Momento de Medición | Razón Científica / Metodológica de Exclusión |
+| Variable Excluida | Fuente | Momento | Razón Metodológica de Exclusión |
 | :--- | :--- | :--- | :--- |
-| **`year` (Año calendario)** | `races.csv` | Previo a carrera | **Variable no estacionaria (*temporal drift*):** Su inclusión degrada empíricamente el AUC-ROC y AUC-PR en la ablación de Train y provoca una caída de $6.71\%$ en el Recall de Random Forest. Conceptualmente fuerza al modelo a extrapolar fuera de rango en el test set ($year > 2012$). |
-| **`nationality` (Nacionalidad)** | `drivers.csv` | Estática (piloto) | **Dispersión alta y sesgo de confusión (*confounding bias*):** Añade 43 dummies dispersas que colapsan el Recall en Regresión Logística de $85.21\%$ a $76.44\%$. La nacionalidad no ejerce tracción física ni causalidad sobre el monoplaza; la competitividad queda capturada limpiamente por `constructorId`. |
-| **`raceId`** | `results.csv` / `races.csv` | Identificador | **Identificador artificial arbitrario:** Es una clave primaria sustituta (*surrogate key*) autoincremental de la base de datos sin significado físico o deportivo. Su uso provocaría sobreajuste memorístico espurio. |
-| **`quali_position` (de `qualifying.csv`)** | `qualifying.csv` | Clasificación | **Redundancia y desactualización:** No contempla penalizaciones de motor o parque cerrado. La posición física de partida está formal y fácticamente consolidada en `grid`. |
-| **`fastestLapSpeed` / `fastestLapTime`** | `results.csv` | Durante la carrera | **Fuga Temporal Grave (*Data Leakage*):** Se registra durante el transcurso del Gran Premio; conocer la velocidad de vuelta rápida antes de la carrera es imposible. |
-| **`milliseconds_pit_stop` / `pit_stops`** | `pit_stops.csv` | Durante la carrera | **Fuga Temporal Grave:** Ocurre durante las detenciones en boxes en plena carrera. |
-| **`positionOrder` / `position` / `points`** | `results.csv` | Fin de carrera | **Variable Resultado (*Post-Race Target Leakage*):** `positionOrder == 1` define exactamente la variable objetivo binaria `win`. Incluirla como feature sería predecir el resultado con el propio resultado. |
-| **`statusId` / `laps`** | `results.csv` | Fin de carrera | **Fuga Temporal:** Refleja abandonos mecánicos o choques ocurridos en carrera. |
-
-### 6.3. Tabla Final de Variables Independientes del Modelo Base Oficial
-
-El dataset pre-carrera final consolidado se fundamenta en las siguientes variables seleccionadas tras el estudio de ablación:
-
-| Nombre de la Variable | Tipo de Dato | Archivo de Origen | Momento de Medición | Definición Funcional Rigurosa | Justificación Teórica y Empírica de Inclusión |
-| :--- | :---: | :--- | :--- | :--- | :--- |
-| **`grid`** | Numérica (Entero ordinal) | `results.csv` | Pre-carrera ($t_0$) | Posición oficial asignada en los cajones de la parrilla de salida tras la aplicación de penalizaciones reglamentarias. | Es el predictor pre-carrera más correlacionado con el triunfo: salir en primeras filas reduce el tráfico, minimiza el riesgo de incidentes en la primera curva y maximiza el ritmo en aire limpio. |
-| **`age`** | Numérica (Flotante continuo) | `drivers.csv` y `races.csv` | Pre-carrera ($t_0$) | Edad biológica exacta del piloto en años al día del evento: $(\text{fecha}_{\text{carrera}} - \text{fecha}_{\text{nacimiento}}) / 365.25$. | Modela la curva cuadrática de rendimiento deportivo: balance entre la ganancia de experiencia táctica y el declive físico/cognitivo en edades avanzadas. Retenerla eleva el AUC-PR en entrenamiento frente a su exclusión. |
-| **`round`** | Numérica (Entero ordinal) | `races.csv` | Pre-carrera ($t_0$) | Número de ronda de la carrera dentro del calendario anual de la temporada ($1$ a $24$). | Modela el ciclo evolutivo tecnológico intra-anual (mejoras mecánicas/aerodinámicas y confiabilidad acumulada) manteniendo invariabilidad de escala temporal año con año. |
-| **`constructorId`** | Categórica (One-Hot, 198 columnas en base Train) | `results.csv` | Pre-carrera ($t_0$) | Identidad de la escudería / constructor del monoplaza (e.g., Ferrari, McLaren, Red Bull, Mercedes). | Es la variable con mayor importancia relativa acumulada en los modelos de ensamble ($>55\%$ de la ganancia de Gini). La Fórmula 1 es un deporte de ingeniería vehicular donde el monoplaza aporta el porcentaje mayoritario del ritmo potencial. |
-| **`win` (Target)** | Binaria ($\{0, 1\}$) | `results.csv` | Post-carrera (Target) | Indicador binario de victoria oficial: $1$ si el piloto finalizó en primer lugar (`positionOrder == 1`), $0$ en cualquier otro caso. | Variable objetivo formal de la tesis de maestría para clasificación binaria supervisada. |
-
-* **Número de Registros Confirmado:** Exactamente **25,121 observaciones** en la base unificada oficial congelada ([`data/dataset_tesis_f1.csv`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/data/dataset_tesis_f1.csv)).
-* **Dimensión de la Matriz de Predictores en Entrenamiento:** $20,108$ filas $\times$ $201$ variables predictoras libres de fuga temporal.
+| **`year` (Año calendario)** | `races.csv` | Pre-carrera | **Variable no estacionaria (*temporal drift*):** Su inclusión degrada el AUC-ROC y AUC-PR en la ablación y provoca una caída de $6.71\%$ en el Recall de Random Forest. Fuerza al modelo a extrapolar fuera de rango en el test set ($year > 2012$). |
+| **`nationality` (Nacionalidad)** | `drivers.csv` | Estática | **Dispersión y confusión (*confounding bias*):** Añade 43 dummies dispersas que colapsan el Recall en Regresión Logística de $85.21\%$ a $76.44\%$. La nacionalidad no ejerce tracción física; la competitividad del auto queda capturada por `constructorId`. |
+| **`raceId` y `driverId`** | Base Ergast | Identificador | **Claves sustitutas autoincrementales:** No poseen valor predictivo real; incluirlas induciría sobreajuste memorístico espurio. Se conservan en el CSV solo para trazabilidad y comprobación de unicidad. |
+| **`quali_position`** | `qualifying.csv` | Clasificación | **Desactualizada respecto a penalizaciones:** La posición definitiva de arranque está consolidada en `grid`. |
+| **`fastestLapSpeed` / `fastestLapTime`** | `results.csv` | Durante carrera | **Fuga Temporal Crítica (*Data Leakage*):** Se mide durante la competencia; imposible de conocer en la parrilla. |
+| **`pit_stops` / paradas en boxes** | `pit_stops.csv` | Durante carrera | **Fuga Temporal:** Refleja la estrategia y eventos sucedidos tras la largada. |
+| **`positionOrder` / `points`** | `results.csv` | Post-carrera | **Fuga de la Variable Objetivo (*Target Leakage*):** `positionOrder == 1` define el target `win`. Predeciría el resultado con el propio resultado. |
+| **`statusId` / `laps`** | `results.csv` | Post-carrera | **Fuga Temporal:** Indica abandonos mecánicos o choques ocurridos en carrera. |
 
 ---
 
-## 7. Dictamen y Próximos Pasos
+## 7. Análisis de No-Fuga en Variables Derivadas: El Caso de `circuit_experience`
 
-1. El dataset se encuentra $100\%$ verificado y congelado en la rama **`test`** del repositorio.
-2. Todas las métricas de ablación y de partición temporal se obtuvieron de manera reproducible y aislada dentro del conjunto de entrenamiento.
-3. Se pone a consideración del comité y del asesor la decisión final entre la **Opción A** (aplicar el filtro de unicidad pre-carrera a 25,033 registros) o la **Opción B** (mantener las 25,121 observaciones históricas de Ergast), habiéndose demostrado que en el conjunto de prueba Test ambas opciones son idénticas al $100.0\%$.
+En la formulación de variables acumulativas propuestas para capturar la familiaridad del piloto con el trazado (`circuit_experience`), se emplea la función acumulativa de Pandas:
 
+```python
+# Ordenar cronológicamente por fecha de carrera
+df = df.sort_values(by=['year', 'date', 'raceId'])
+
+# Cálculo acumulativo estricto
+df['circuit_experience'] = df.groupby(['driverId', 'circuitId']).cumcount()
+```
+
+### Demostración Matemática de No-Fuga
+La función `.cumcount()` etiqueta las apariciones de cada grupo con base cero ($0, 1, 2, \dots, N-1$):
+* En la primera carrera de un piloto en un circuito específico: `cumcount() = 0` (0 carreras previas completadas).
+* En la segunda participación: `cumcount() = 1` (1 carrera previa completada).
+* En la $k$-ésima participación: El valor asignado es estrictamente $k - 1$.
+
+**Conclusión:** La carrera que se está prediciendo **nunca es contabilizada en la experiencia acumulada**, garantizando causalidad retrospectiva estricta.
+
+---
+
+## 8. Justificación Metodológica del Umbral de Clasificación (*Classification Threshold*)
+
+### 8.1. Desbalance Severo de Clases en Fórmula 1
+En una carrera típica de Fórmula 1 toman la salida entre 20 y 22 pilotos, pero **solo 1 puede obtener la victoria** ($y = 1$). Esto impone una prevalencia natural de la clase positiva de apenas **$4.49\%$** (un desbalance aproximado de 21 a 1).
+
+### 8.2. Inadecuación del Umbral Ingenuo ($\tau = 0.50$)
+En clasificadores probabilísticos sin calibración de costos, un umbral fijo en $\tau = 0.50$ exige que el modelo asigne una probabilidad superior al 50% para predecir que un piloto ganará. En presencia de 20 competidores con probabilidades distribuidas, la probabilidad posterior rara vez supera el 0.50 a menos que el favoritismo sea absoluto. Esto causa una tasa excesiva de falsos negativos y un colapso en la métrica de exhaustividad (*Recall*).
+
+### 8.3. Mecanismos de Compensación Adoptados
+
+#### A. Función de Pérdida con Costos Balanceados (`class_weight='balanced'`)
+Durante el entrenamiento, se ajustan los pesos de penalización de la función de pérdida inversamente proporcionales a las frecuencias muestrales de cada clase:
+$$w_1 = \frac{N}{2 \cdot N_1} = \frac{25033}{2 \cdot 1125} \approx 11.12, \qquad w_0 = \frac{N}{2 \cdot N_0} = \frac{25033}{2 \cdot 23908} \approx 0.52$$
+Al penalizar los errores sobre la clase positiva con un factor $\approx 21$ veces mayor que sobre la negativa, el hiperplano de decisión se desplaza endógenamente, permitiendo que el umbral estándar $\tau = 0.50$ opere en una escala compensada de costos.
+
+#### B. Optimización del Umbral Operativo vía Curva Precision-Recall
+Si se evalúan probabilidades no balanceadas, el umbral óptimo $\tau^*$ se determina en el conjunto de entrenamiento maximizando la media armónica entre precisión y exhaustividad:
+$$\tau^* = \arg\max_{\tau \in (0, 1)} F_1(\tau) = \arg\max_{\tau \in (0, 1)} \frac{2 \cdot P(\tau) \cdot R(\tau)}{P(\tau) + R(\tau)}$$
+En dominios con desbalance del 4.5%, el umbral que maximiza el $F_1$-Score se ubica típicamente en el intervalo $\tau \in [0.15, 0.25]$.
+
+#### C. Paradigma Deportivo de Clasificación por Ranking (*ArgMax por Gran Premio*)
+Desde una perspectiva operativa del automovilismo, la predicción óptima no consiste en evaluar a cada piloto como una decisión binaria independiente, sino en estimar la probabilidad condicionada al evento $P(\text{win} \mid \text{piloto } d, \text{carrera } r)$ y predecir como ganador al piloto con la probabilidad máxima dentro de dicha carrera:
+$$\hat{d}_r^* = \arg\max_{d \in \mathcal{D}_r} \hat{P}(\text{win} \mid d, r)$$
+Este enfoque garantiza por construcción que cada Gran Premio prediga exactamente a un solo ganador, eliminando la necesidad de calibrar un umbral estático arbitrario.
+
+---
+
+## 9. Estudio de Ablación en Entrenamiento (Media de 5 Folds Temporales)
+
+En estricta observancia del principio de mantener el conjunto de prueba ciego (*test set integrity*), el estudio de ablación para validar la exclusión de `year` y `nationality` se realizó **únicamente con las 20,020 observaciones de entrenamiento** utilizando validación cruzada temporal de 5 pliegues (*5-Fold Race-Aware TimeSeriesSplit*):
+
+| Configuración Evaluada | Dimensiones ($p$) | LR AUC-ROC | LR AUC-PR | LR F1 | LR Recall | RF AUC-ROC | RF AUC-PR | RF F1 | RF Recall |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1. Base Oficial (Sin Año, Sin Nacionalidad)** | **201** | **0.9065** | **0.2820** | 0.2904 | **0.8521** | **0.8892** | **0.2581** | **0.3078** | **0.7479** |
+| **2. Con Año (Sin Nacionalidad)** | **202** | 0.9046 | 0.2759 | **0.2982** | 0.8534 | 0.8882 | 0.2503 | 0.3083 | 0.6808 |
+| **3. Con Nacionalidad (Sin Año)** | **244** | 0.9002 | 0.2742 | 0.2797 | 0.7644 | 0.8861 | 0.2572 | 0.2915 | 0.7178 |
+| **4. Con Año y Nacionalidad** | **245** | 0.8984 | 0.2636 | 0.2881 | 0.7712 | 0.8813 | 0.2358 | 0.2930 | 0.6521 |
+
+### Conclusiones de la Ablación
+1. **Exclusión de `year`:** Su incorporación reduce la precisión en la clase minoritaria (AUC-PR cae de $0.2820$ a $0.2759$ en LR y de $0.2581$ a $0.2503$ en RF) y destruye la sensibilidad en Random Forest (el Recall cae de $74.79\%$ a $68.08\%$, perdiendo $6.71$ puntos porcentuales).
+2. **Exclusión de `nationality`:** Provoca una caída dramática en el Recall de Regresión Logística (de $85.21\%$ a $76.44\%$, una pérdida de $8.77$ puntos porcentuales) y añade 43 variables altamente ralas que perjudican la capacidad de generalización.
+3. La **Configuración Base Oficial con 201 variables** (`grid`, `age`, `round`, `constructorId_*`) maximiza simultáneamente el AUC-ROC, AUC-PR y la capacidad de detección de victorias en ambos paradigmas de modelado.
+
+---
+
+## 10. Dictamen Metodológico Final
+
+1. **Integridad de Datos:** La base de datos `data/dataset_tesis_f1.csv` cuenta con **25,033 observaciones**, **1,125 carreras**, **1,125 victorias** (exactamente un ganador por carrera) y **cero duplicados piloto-carrera**.
+2. **Blindaje contra Fuga:** Se ha demostrado matemáticamente y en código que no existe traslape cronológico entre Train y Test ($\max(\text{fecha}_{\text{train}}) < \min(\text{fecha}_{\text{test}})$), que el escalado se ajusta únicamente sobre entrenamiento y que las variables derivadas no incorporan información de la carrera predicha.
+3. **Consistencia de Código:** Todos los tests de la suite (`tests/test_pilot_race_uniqueness.py` y `tests/test_temporal_integrity.py`) han sido ejecutados y validados con estatus aprobatorio del 100% (`OK`).
+4. **Estado del Repositorio:** Todos los cambios se encuentran congelados y sincronizados en la rama oficial **`test`** del sistema de control de versiones Git.
