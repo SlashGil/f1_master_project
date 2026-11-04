@@ -105,7 +105,7 @@ except FileNotFoundError:
 print("\n[2/8] Preparando Features (X) y Target (y)...")
 
 # Separar features y target (excluyendo raceId, year y nationality fuera del alcance de la tesis)
-cols_to_exclude = ['win', 'raceId', 'year'] + [c for c in df.columns if c.startswith('nationality')]
+cols_to_exclude = ['win', 'raceId', 'driverId', 'year'] + [c for c in df.columns if c.startswith('nationality')]
 X = df.drop(columns=cols_to_exclude, errors='ignore')
 y = df['win']
 

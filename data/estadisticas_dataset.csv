@@ -4,6 +4,6 @@ Total victorias,1125,Casos positivos (piloto ganó)
 Total sin victorias,23908,Casos negativos (piloto no ganó)
 Porcentaje victorias,4.49%,Porcentaje de casos positivos
 Porcentaje sin victorias,95.51%,Porcentaje de casos negativos
-Features totales,246,Variables predictoras (excluyendo target)
+Features totales,247,Variables predictoras (excluyendo target)
 Split recomendado,TimeSeriesSplit / corte temporal,Evita mezclar futuro con pasado
 Escalado correcto,"Fit scaler en train, transform en test",Evita fuga de información por preprocesamiento

@@ -70,7 +70,7 @@ else:
 
 # 2. Definir features (X) y target (y)
 # Se excluye 'raceId' (identificador), 'win' (target) y 'year'/'nationality_*' (fuera de tesis).
-cols_to_exclude = ["win", "raceId", "year"] + [c for c in df_sorted.columns if c.startswith("nationality")]
+cols_to_exclude = ["win", "raceId", "driverId", "year"] + [c for c in df_sorted.columns if c.startswith("nationality")]
 X = df_sorted.drop(columns=cols_to_exclude, errors="ignore")
 y = df_sorted["win"]
 print(f"Features seleccionados: {X.shape[1]} variables (sin 'year' ni 'nationality')")

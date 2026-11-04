@@ -78,6 +78,7 @@ for name, df in [("results", results), ("drivers", drivers), ("races", races)]:
 
 results["positionOrder"] = pd.to_numeric(results["positionOrder"], errors="coerce")
 results["grid"] = pd.to_numeric(results["grid"], errors="coerce")
+results["driverId"] = pd.to_numeric(results["driverId"], errors="coerce")
 results["constructorId"] = pd.to_numeric(results["constructorId"], errors="coerce")
 
 races["year"] = pd.to_numeric(races["year"], errors="coerce")
@@ -156,7 +157,7 @@ print(f"  ✓ Filas después de limpieza (biyectivas piloto-carrera): {despues_d
 
 print("\n[5/7] Aplicando one-hot encoding...")
 
-X = data[["raceId", *features_numericas, *features_categoricas]].copy()
+X = data[["raceId", "driverId", *features_numericas, *features_categoricas]].copy()
 y = data["win"].copy()
 
 X_encoded = pd.get_dummies(X, columns=features_categoricas, dtype=float)

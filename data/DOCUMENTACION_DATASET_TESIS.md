@@ -29,8 +29,8 @@ Esta versión del dataset está diseñada para **predicción pre-carrera** y cor
 ## 5. Tamaño del dataset generado
 
 - Observaciones: 25,033
-- Columnas totales: 247
-- Features (sin target): 246
+- Columnas totales: 248
+- Features (sin target): 247
 - Victorias: 1,125 (4.49%)
 
 ## 6. Ejemplo correcto de split temporal + escalado
@@ -64,5 +64,5 @@ X_test_scaled = scaler.transform(X_test)
 ---
 
 **Generado automáticamente por:** `preparar_datos_tesis.py`  
-**Fecha:** 2026-11-04 12:13:12  
+**Fecha:** 2026-11-04 12:27:31  
 **Versión del documento:** 2.0
