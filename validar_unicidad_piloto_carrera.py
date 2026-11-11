@@ -94,6 +94,8 @@ def cargar_y_alinear_datos(rutas: dict[str, str]) -> tuple[pd.DataFrame, pd.Data
     results["grid"] = pd.to_numeric(results["grid"], errors="coerce")
     results["positionOrder"] = pd.to_numeric(results["positionOrder"], errors="coerce")
     results["constructorId"] = pd.to_numeric(results["constructorId"], errors="coerce")
+    results["resultId"] = pd.to_numeric(results["resultId"], errors="coerce")
+    results["points"] = pd.to_numeric(results["points"], errors="coerce").fillna(0.0)
     races["year"] = pd.to_numeric(races["year"], errors="coerce")
     races["round"] = pd.to_numeric(races["round"], errors="coerce")
     races["date"] = pd.to_datetime(races["date"], errors="coerce")
@@ -119,12 +121,20 @@ def cargar_y_alinear_datos(rutas: dict[str, str]) -> tuple[pd.DataFrame, pd.Data
     columnas_base = ["raceId", "driverId", "age", "grid", "year", "round", "nationality", "constructorId", "positionOrder"]
     merged = merged.dropna(subset=columnas_base).copy()
 
-    # Orden cronológico canónico
-    merged = merged.sort_values(["year", "round", "raceId"]).reset_index(drop=True)
-
-    # Si df_tesis ya fue deduplicado (25,033 filas), alinear merged deduplicado
+    # Si df_tesis ya fue deduplicado (25,033 filas), aplicar exactamente las mismas reglas que preparar_datos_tesis.py
     if len(df_tesis) != len(merged):
-        merged = merged.drop_duplicates(subset=["raceId", "driverId"], keep="first").sort_values(["year", "round", "raceId"]).reset_index(drop=True)
+        merged = merged.sort_values(["raceId", "win", "points", "resultId"], ascending=[True, False, False, False])
+        ganador_primario_idx = merged[merged["win"] == 1].groupby("raceId", sort=False).head(1).index
+        merged["win"] = 0
+        merged.loc[ganador_primario_idx, "win"] = 1
+
+        merged = (
+            merged.sort_values(["raceId", "driverId", "win", "resultId"], ascending=[True, True, False, True])
+            .drop_duplicates(subset=["raceId", "driverId"], keep="first")
+        )
+
+    # Orden cronológico canónico idéntico a dataset_tesis_f1.csv
+    merged = merged.sort_values(["year", "round", "raceId"]).reset_index(drop=True)
 
     if len(merged) == len(df_tesis):
         df_tesis["driverId"] = merged["driverId"].values
@@ -284,10 +294,11 @@ def imprimir_reporte_terminal(res: dict, verbose: bool = False):
     print("  En las primeras décadas de la F1 (1950-1964), el reglamento deportivo permitía")
     print("  la 'conducción compartida' (shared drives / relevos intra-carrera). Si el coche")
     print("  de un piloto fallaba, este podía subir al monoplaza de un compañero.")
-    print(f"  • Carreras afectadas con relevos en base Ergast: 41 de 1,125 ({41/1125*100:.2f}%)")
-    print(f"  • Pilotos involucrados en relevos compartidos:    82 casos ({t_hist['filas_excedentes']} filas excedentes)")
-    print("  • Impacto en predicción pre-carrera: La sustitución ocurre DURANTE la carrera,")
-    print("    por lo que registrar dos veces al mismo piloto introduce información post-largada.")
+    print(f"  • Carreras afectadas con relevos (grid > 0): 39 de 1,125 ({39/1125*100:.2f}%)")
+    print(f"  • Pares piloto-carrera en relevos compartidos: 82 pares (88 filas excedentes: 3 co-ganadores + 85 no ganadores)")
+    print("  • Impacto en modelado centrado en el piloto: La sustitución ocurrió DURANTE la carrera;")
+    print("    se conserva 1 solo registro por piloto-carrera priorizando al piloto ganador (win=1)")
+    print("    y manteniendo la fila original de largada para los pilotos que no ganaron.")
 
     print("\n[4] RESOLUCIÓN Y VALIDACIÓN BAJO CRITERIO PRE-CARRERA (BIYECCIÓN PARRILLA)")
     print("-" * ancho)
@@ -381,8 +392,8 @@ Donde:
 
 ### 3.3. Era Primitiva y Regulación de Relevos Compartidos (1950-1964)
 * En las primeras décadas del campeonato, la FIA permitía la figura deportiva de *shared drives*. Si el monoplaza de un piloto sufría una falla mecánica durante la carrera, este podía tomar el monoplaza de un compañero de equipo.
-* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **{t_hist['duplicados']} instancias históricas** (88 filas excedentes en 41 carreras).
-* **Criterio Metodológico Pre-Carrera:** Debido a que el modelo predice la probabilidad de triunfo en $t_0$ (antes de la largada), la reasignación de coches durante la carrera representa un evento posterior a la largada. Por consiguiente, retener la posición inicial de largada en parrilla (`grid > 0`) elimina la duplicidad y restituye la biyección matemática:
+* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **82 pares piloto-carrera duplicados** en los datos con `grid > 0` (88 filas excedentes en 39 carreras: 3 registros de co-ganadores y 85 registros de relevos no ganadores).
+* **Criterio Metodológico Aplicado (Prioridad al Piloto Ganador):** En cada Gran Premio se garantiza exactamente 1 ganador (`win = 1`, conservando a Fangio en Francia 1951 y Argentina 1956, y a Moss en Gran Bretaña 1957), mientras que para los pilotos que no ganaron se conserva la fila con la que largaron originalmente (`resultId` ascendente), eliminando la duplicidad y restituyendo la biyección matemática:
   $$N(r, d) = 1 \\quad \\forall r \\in \\mathcal{{R}}, \\forall d \\in \\mathcal{{D}}_r$$
 
 ---

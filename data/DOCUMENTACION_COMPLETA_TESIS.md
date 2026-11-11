@@ -165,10 +165,10 @@ No hacer `fit` del scaler con datos de test.
 Generación actual:
 
 - **Archivo**: `dataset_tesis_f1.csv`
-- **Observaciones**: 25,121
-- **Columnas totales**: 247
-- **Features (sin target)**: 246
-- **Victorias (`win=1`)**: 1,128 (4.49%)
+- **Observaciones**: 25,033
+- **Columnas totales**: 248
+- **Features (sin target ni identificadores excluidos)**: 247 en CSV bruto (201 predictores en $X$)
+- **Victorias (`win=1`)**: 1,125 (4.49%)
 
 El desbalance de clases se mantiene (propio del dominio de F1).
 

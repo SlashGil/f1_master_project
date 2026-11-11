@@ -1,6 +1,6 @@
 tipo,clave,valor
 configuracion,version,2.0
-configuracion,fecha_generacion,2026-11-04 12:27:31
+configuracion,fecha_generacion,2026-11-11 11:55:32
 configuracion,descripcion,Dataset pre-carrera para predicción de victoria en F1 (sin fuga temporal)
 metodologia,split_recomendado,TimeSeriesSplit / corte temporal por año-ronda (no random 80/20)
 metodologia,escalado_recomendado,Ajustar scaler SOLO con train y luego transformar test

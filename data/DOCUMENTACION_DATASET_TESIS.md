@@ -64,5 +64,5 @@ X_test_scaled = scaler.transform(X_test)
 ---
 
 **Generado automáticamente por:** `preparar_datos_tesis.py`  
-**Fecha:** 2026-11-04 12:27:31  
+**Fecha:** 2026-11-11 11:55:32  
 **Versión del documento:** 2.0

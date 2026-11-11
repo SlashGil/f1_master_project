@@ -104,11 +104,11 @@ $$\forall k \in \{1, \dots, K\}, \quad \max(T_{\text{train}}^{(k)}) \le \min(T_{
 Ran 5 tests in 0.886s
 OK
 
-[OK] Invariante 1: Frontera Temporal 80/20 Demostrada (Train: 20,096 | Test: 5,025)
+[OK] Invariante 1: Frontera Temporal Atómica Demostrada (Dataset actual 25,033: Train 20,020 [79.97%] | Test 5,013 [20.03%])
 [OK] Invariante 2: Validación Cruzada Causal en 5 folds expansivos de TimeSeriesSplit
 [OK] Invariante 3: Cero variables post-carrera o intra-carrera en el dataset unificado
 [OK] Invariante 4: Exclusión estricta de 'raceId', 'year' y 'nationality' en los 3 modelos oficiales
-[OK] Invariante 5: Integridad muestral canónica verificada en N = 25,121 observaciones
+[OK] Invariante 5: Integridad muestral canónica verificada en N = 25,033 observaciones (1,125 victorias únicas)
 ```
 
 ---

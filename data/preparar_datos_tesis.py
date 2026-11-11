@@ -80,6 +80,8 @@ results["positionOrder"] = pd.to_numeric(results["positionOrder"], errors="coerc
 results["grid"] = pd.to_numeric(results["grid"], errors="coerce")
 results["driverId"] = pd.to_numeric(results["driverId"], errors="coerce")
 results["constructorId"] = pd.to_numeric(results["constructorId"], errors="coerce")
+results["resultId"] = pd.to_numeric(results["resultId"], errors="coerce")
+results["points"] = pd.to_numeric(results["points"], errors="coerce").fillna(0.0)
 
 races["year"] = pd.to_numeric(races["year"], errors="coerce")
 races["round"] = pd.to_numeric(races["round"], errors="coerce")
@@ -131,18 +133,41 @@ columnas_base = [
     *features_categoricas,
     "win",
 ]
+columnas_trabajo = [*columnas_base, "resultId", "points"]
 
 antes_dropna = len(data)
-data = data[columnas_base].dropna().copy()
+data = data[columnas_trabajo].dropna(subset=columnas_base).copy()
 
 # Filtro de calidad mínima: posiciones de salida válidas (>0)
 data = data[data["grid"] > 0].copy()
 filas_con_duplicados = len(data)
 
-# Criterio pre-carrera: 1 solo registro por piloto por carrera (resolución de relevos/shared drives de 1950-1964)
-# Se conserva la posición original de largada en parrilla y se descarta el coche tomado en boxes
-data = data.drop_duplicates(subset=["raceId", "driverId"], keep="first").copy()
+# Regla 1 - Criterio explícito de ganador único por carrera:
+# En carreras históricas con relevos compartidos ganadores (1951 Francia, 1956 Argentina, 1957 Gran Bretaña),
+# solo un piloto por carrera conserva win = 1: el ganador principal que cruzó la meta y sumó mayor puntaje
+# (desempate por resultId descendente). El co-ganador que cedió el auto permanece en la carrera con win = 0.
+data = data.sort_values(["raceId", "win", "points", "resultId"], ascending=[True, False, False, False])
+ganador_primario_idx = data[data["win"] == 1].groupby("raceId", sort=False).head(1).index
+data["win"] = 0
+data.loc[ganador_primario_idx, "win"] = 1
+
+# Regla 2 - Biyección piloto-carrera (1 fila por piloto por carrera):
+# Priorizamos conservar el registro del piloto que ganó (win = 1); para los pilotos que no ganaron,
+# se conserva la fila con la que largaron originalmente (resultId ascendente).
+data = (
+    data.sort_values(["raceId", "driverId", "win", "resultId"], ascending=[True, True, False, True])
+    .drop_duplicates(subset=["raceId", "driverId"], keep="first")
+    .copy()
+)
 filas_eliminadas_relevos = filas_con_duplicados - len(data)
+
+# Validaciones estrictas de integridad muestral y regla de ganador único
+assert data.duplicated(subset=["raceId", "driverId"]).sum() == 0, "Existen duplicados (raceId, driverId)"
+ganadores_por_carrera = data.groupby("raceId")["win"].sum()
+assert (ganadores_por_carrera == 1).all(), "Cada carrera debe tener exactamente 1 ganador (win == 1)"
+assert int(data["win"].sum()) == data["raceId"].nunique(), "Total de victorias debe igualar total de carreras"
+
+data = data[columnas_base].copy()
 
 despues_dropna = len(data)
 print(f"  ✓ Filas antes de limpieza final: {antes_dropna:,}")

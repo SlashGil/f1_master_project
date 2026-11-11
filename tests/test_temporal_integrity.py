@@ -89,7 +89,7 @@ class TestTemporalIntegrity(unittest.TestCase):
         total_rows = len(self.dataset_rows)
         self.assertGreater(total_rows, 0, "El dataset no debe estar vacío")
 
-        # Partición atómica oficial: límite en el final del GP de Abu Dabi 2012 (índice 20,108)
+        # Partición atómica oficial: límite en el final del GP de Abu Dabi 2012 (índice 20,020)
         # Buscar el último índice del GP de Abu Dabi 2012
         abu_dhabi_indices = [i for i, r in enumerate(self.dataset_rows) if r["year"] == 2012 and r["round"] == 18]
         if abu_dhabi_indices:
@@ -227,7 +227,7 @@ class TestTemporalIntegrity(unittest.TestCase):
     def test_05_unified_dataset_size(self):
         """
         Verificar que el dataset unificado oficial conserve exactamente
-        las 25,121 observaciones requeridas por la auditoría académica.
+        las 25,033 observaciones requeridas por la auditoría académica.
         """
         expected_rows = 25033
         actual_rows = len(self.dataset_rows)

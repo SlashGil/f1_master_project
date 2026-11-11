@@ -65,6 +65,7 @@ class TestPilotRaceUniqueness(unittest.TestCase):
             for row in reader:
                 cls.dataset_rows.append({
                     "raceId": int(row["raceId"]),
+                    "driverId": int(float(row["driverId"])) if "driverId" in row else None,
                     "grid": int(float(row["grid"])),
                     "year": int(float(row["year"])) if "year" in row else None,
                     "round": int(float(row["round"])) if "round" in row else None,
@@ -103,9 +104,10 @@ class TestPilotRaceUniqueness(unittest.TestCase):
         Validar que en la era moderna (1965-2024), NINGÚN piloto tenga más
         de un registro en la misma carrera.
         """
-        modern_results = [r for r in self.results_clean if r["raceId"] in {
+        modern_races = {
             row["raceId"] for row in self.dataset_rows if row["year"] is not None and row["year"] >= 1965
-        }]
+        }
+        modern_results = [r for r in self.results_clean if r["raceId"] in modern_races]
 
         pair_counts = {}
         for r in modern_results:
@@ -122,20 +124,52 @@ class TestPilotRaceUniqueness(unittest.TestCase):
 
     def test_03_pre_race_deduplication_guarantee(self):
         """
-        Validar que al aplicar el criterio metodológico pre-carrera (asignación
-        original de parrilla), se obtienen exactamente 25,033 pares únicos sin duplicidad.
+        Validar que al aplicar la deduplicación piloto-carrera sobre grid > 0,
+        se obtienen exactamente 25,033 pares únicos (raceId, driverId) sin duplicidad.
         """
-        # Filtrar duplicados en results reteniendo el primer registro de largada
-        seen_pairs = set()
-        dedup_records = []
-        for r in self.results_clean:
-            key = (r["raceId"], r["driverId"])
-            if key not in seen_pairs:
-                seen_pairs.add(key)
-                dedup_records.append(r)
-
+        seen_pairs = {(r["raceId"], r["driverId"]) for r in self.results_clean}
         self.assertEqual(len(seen_pairs), 25033, "Debe haber exactamente 25,033 duplas únicas de piloto-carrera")
-        print(f"\n  [OK] Criterio Pre-Carrera: 25,033 duplas únicas de piloto-carrera verificadas (100.0% de cobertura).")
+
+        dataset_pairs = [(r["raceId"], r["driverId"]) for r in self.dataset_rows]
+        self.assertEqual(len(dataset_pairs), 25033, "El dataset oficial debe tener exactamente 25,033 filas")
+        self.assertEqual(len(set(dataset_pairs)), 25033, "Existen pares (raceId, driverId) duplicados en dataset_tesis_f1.csv")
+        print(f"\n  [OK] Criterio Piloto-Carrera: 25,033 duplas únicas verificadas en dataset_tesis_f1.csv.")
+
+    def test_04_single_winner_per_race_rule(self):
+        """
+        Validar la regla de ganador único por carrera: cada Gran Premio tiene
+        exactamente 1 registro con win == 1, y en los 3 relevos ganadores históricos
+        (1951 Francia, 1956 Argentina, 1957 Gran Bretaña) se conserva al piloto que cruzó ganador.
+        """
+        wins_per_race = {}
+        for r in self.dataset_rows:
+            rid = r["raceId"]
+            wins_per_race[rid] = wins_per_race.get(rid, 0) + (1 if r["win"] == 1 else 0)
+
+        races_without_winner = {rid: c for rid, c in wins_per_race.items() if c == 0}
+        races_multi_winner = {rid: c for rid, c in wins_per_race.items() if c > 1}
+
+        self.assertEqual(races_without_winner, {}, f"Carreras sin ganador: {races_without_winner}")
+        self.assertEqual(races_multi_winner, {}, f"Carreras con múltiples ganadores: {races_multi_winner}")
+        self.assertEqual(sum(wins_per_race.values()), len(wins_per_race), "Total de victorias debe igualar total de carreras")
+        self.assertEqual(len(wins_per_race), 1125, "Deben existir exactamente 1,125 carreras")
+
+        # Verificar resolución histórica centrada en el piloto ganador (Fangio en 828 y 784, Moss en 780)
+        # y permanencia de sus co-pilotos en su fila original de salida con win == 0
+        lookup = {(r["raceId"], r["driverId"]): r for r in self.dataset_rows}
+        self.assertEqual(lookup[(828, 579)]["win"], 1)  # Fangio ganador Francia 1951
+        self.assertEqual(lookup[(828, 786)]["win"], 0)  # Fagioli original grid=7, win=0
+        self.assertEqual(lookup[(828, 786)]["grid"], 7)
+
+        self.assertEqual(lookup[(784, 579)]["win"], 1)  # Fangio ganador Argentina 1956
+        self.assertEqual(lookup[(784, 577)]["win"], 0)  # Musso original grid=3, win=0
+        self.assertEqual(lookup[(784, 577)]["grid"], 3)
+
+        self.assertEqual(lookup[(780, 475)]["win"], 1)  # Moss ganador Gran Bretaña 1957
+        self.assertEqual(lookup[(780, 479)]["win"], 0)  # Brooks original grid=3, win=0
+        self.assertEqual(lookup[(780, 479)]["grid"], 3)
+
+        print("\n  [OK] Regla de Ganador Único: 1,125 victorias en 1,125 carreras (prioridad al piloto ganador verificada).")
 
 
 if __name__ == "__main__":

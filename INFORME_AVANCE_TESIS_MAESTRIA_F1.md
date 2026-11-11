@@ -191,11 +191,11 @@ Se evaluaron de forma cruzada las 4 combinaciones posibles de inclusión/exclusi
 Para garantizar reproducibilidad absoluta ante tribunales de tesis y comités académicos, el conjunto de datos de la investigación se encuentra formalmente congelado:
 
 * **Ruta en Repositorio:** `data/dataset_tesis_f1.csv`
-* **Volumen:** $N = 25,121$ observaciones y $203$ columnas originales (201 predictores $+ 1$ objetivo $+ 1$ identificador).
+* **Volumen:** $N = 25,033$ observaciones y $248$ columnas en CSV ($201$ predictores en $X$, $1$ objetivo `win`, $2$ identificadores `raceId`/`driverId` y $44$ variables de ablación excluidas).
 * **Distribución de Clases:**
-  * Victorias ($y = 1$): $1,128$ ($4.49\%$)
-  * No victorias ($y = 0$): $23,993$ ($95.51\%$)
-  * Desbalance severo: $1 : 21.27$
+  * Victorias ($y = 1$): $1,125$ ($4.49\%$)
+  * No victorias ($y = 0$): $23,908$ ($95.51\%$)
+  * Desbalance severo: $1 : 21.25$
 
 ---
 
@@ -274,14 +274,14 @@ Durante el proceso de auditoría y refactorización técnica de la tesis se iden
 
 ### 6.6. Suite Automatizada de Pruebas Unitarias de Integridad Científica
 * **Diagnóstico:** Carencia de mecanismos de verificación automática que garantizaran la replicabilidad del pipeline ante revisores.
-* **Corrección:** Se implementó [`tests/test_temporal_integrity.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/tests/test_temporal_integrity.py) con 5 pruebas automatizadas:
-  1. `test_01_chronological_split_boundary`: Certifica la frontera atómica ($\max(\text{train}) < \min(\text{test})$, $20,108$ filas en train vs $5,013$ en test).
+* **Corrección:** Se implementó [`tests/test_temporal_integrity.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/tests/test_temporal_integrity.py) y [`tests/test_pilot_race_uniqueness.py`](file:///c:/Users/slash/PyCharmMiscProject/f1_master_project/tests/test_pilot_race_uniqueness.py) con pruebas automatizadas:
+  1. `test_01_chronological_split_boundary`: Certifica la frontera atómica ($\max(\text{train}) < \min(\text{test})$, $20,020$ filas [`79.97%`] en train vs $5,013$ [`20.03%`] en test).
   2. `test_02_time_series_split_expanding_folds`: Valida que los pliegues de validación no traslapen temporalmente con el entrenamiento.
   3. `test_03_no_prohibited_in_race_features`: Inspecciona que no existan variables post-carrera en el dataset.
   4. `test_04_raceid_excluded_from_model_features`: Inspecciona el código de los 3 modelos oficiales para certificar la exclusión programática de `raceId`, `year` y `nationality`.
-  5. `test_05_unified_dataset_size`: Verifica el tamaño muestral canónico ($N = 25,121$).
+  5. `test_05_unified_dataset_size`: Verifica el tamaño muestral canónico ($N = 25,033$).
   
-  **Resultado de Ejecución:** `Ran 5 tests in 0.553s -> OK (100% de pruebas aprobadas)`.
+  **Resultado de Ejecución:** `Ran 9 tests in 1.159s -> OK (100% de pruebas aprobadas)`.
 
 ### 6.7. Estandarización del Entorno Computacional (`requirements.txt`)
 * **Diagnóstico:** Dificultad para reproducir el entorno en diferentes sistemas operativos y versiones de bibliotecas.

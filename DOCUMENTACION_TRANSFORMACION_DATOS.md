@@ -15,9 +15,9 @@ A raíz de la **Auditoría Técnica y Diagnóstico del Pipeline de Datos (Septie
 
 1. **Escenario Pre-Carrera Estricto**: Se eliminan todas las variables que se conocen durante o después de la carrera (`fastestLapSpeed`, `milliseconds_pit_stop`, `milliseconds_lap_time`, `positionOrder`).
 2. **Exclusión de `raceId` de los Predictores**: `raceId` actúa como identificador relacional y proxy temporal para la ordenación cronológica, pero queda **estrictamente excluido** de la matriz de características $X$.
-3. **Partición Cronológica Temporal (80/20)**: Se sustituyó definitivamente la partición aleatoria `train_test_split(shuffle=True)` por un corte temporal donde el 80% pasado entrena el modelo y el 20% futuro se evalúa como prueba.
+3. **Partición Cronológica Temporal Atómica (79.97% / 20.03%)**: Se sustituyó definitivamente la partición aleatoria `train_test_split(shuffle=True)` por un corte temporal sin fractura de carreras (GP de Abu Dabi 2012 íntegro en Train; Test inicia en el GP de EE.UU. 2012), donde el pasado (`20,020` filas) entrena el modelo y el futuro (`5,013` filas) se evalúa como prueba.
 4. **Preprocesamiento y Escalado sin Fuga**: El escalado (`StandardScaler`) se calibra (`fit`) **únicamente** sobre el conjunto de entrenamiento (`X_train`) y se aplica (`transform`) sobre el conjunto de prueba (`X_test`).
-5. **Fuente Única de Verdad**: El archivo [`data/dataset_tesis_f1.csv`](data/dataset_tesis_f1.csv) consolida exactamente **25,121 observaciones** para todos los modelos del proyecto.
+5. **Fuente Única de Verdad**: El archivo [`data/dataset_tesis_f1.csv`](data/dataset_tesis_f1.csv) consolida exactamente **25,033 observaciones** (tras filtrar `grid > 0` y aplicar las reglas de ganador único y deduplicación piloto-carrera) para todos los modelos del proyecto.
 
 ---
 
@@ -58,10 +58,11 @@ data = results.merge(
 )
 ```
 
-### 2.2. Normalización de Nulos y Filtros de Calidad
+### 2.2. Normalización de Nulos, Filtros de Calidad y Regla de Unicidad
 1. **Reemplazo de `\N`**: Se reemplaza la cadena `\N` de PostgreSQL por `numpy.nan`.
-2. **Filtro de Parrilla Válida (`grid > 0`)**: Se descartan salidas desde el pit lane sin posición fija o descalificaciones previas.
-3. **Cálculo de Edad al Momento de la Carrera**:
+2. **Filtro de Parrilla Válida (`grid > 0`)**: Se descartan salidas desde el pit lane sin posición fija o no clasificados (`26,759 → 25,121` filas; `-1,638`).
+3. **Regla de Ganador Único y Deduplicación Piloto-Carrera (`25,121 → 25,033`)**: Se descartan **88 filas** de relevos compartidos (1950–1964) en 39 carreras (3 registros de co-ganadores y 85 de relevos `win = 0`), conservando exactamente 1 ganador por Gran Premio (priorizando al piloto que cruzó 1.º) y manteniendo en su fila original de salida a los pilotos que no ganaron.
+4. **Cálculo de Edad al Momento de la Carrera**:
    $$\text{age} = \frac{\text{fecha\_carrera} - \text{fecha\_nacimiento}}{365.25}$$
 
 ---
@@ -69,10 +70,10 @@ data = results.merge(
 ## 3. Definición de la Variable Objetivo ($y$)
 
 - **Definición**: Variable binaria de victoria (`win`):
-  $$y = \begin{cases} 1 & \text{si } \text{positionOrder} = 1 \\ 0 & \text{en otro caso} \end{cases}$$
-- **Distribución de Clases (25,121 observaciones)**:
-  - **Victorias ($y=1$)**: 1,128 (4.49%)
-  - **No Victorias ($y=0$)**: 23,993 (95.51%)
+  $$y = \begin{cases} 1 & \text{si } \text{positionOrder} = 1 \text{ (ganador único de la carrera)} \\ 0 & \text{en otro caso} \end{cases}$$
+- **Distribución de Clases (25,033 observaciones)**:
+  - **Victorias ($y=1$)**: 1,125 (4.49%)
+  - **No Victorias ($y=0$)**: 23,908 (95.51%)
   - **Ratio de Desbalance**: 1:21.3 (Severo)
 
 ---
@@ -92,7 +93,7 @@ data = results.merge(
 - `positionOrder`, `position`, `points`, `statusId` (Target leakage / post-carrera).
 - `fastestLapSpeed`, `fastestLapTime`, `rank` (Post-carrera).
 - `milliseconds_pit_stop`, `milliseconds_lap_time` (Intra-carrera).
-- **`raceId`**: Reservado exclusivamente para la ordenación cronológica interna; **excluido de la matriz de predictores**.
+- **`raceId` y `driverId`**: Reservados exclusivamente para la ordenación cronológica interna y verificación de unicidad; **excluidos de la matriz de predictores**.
 - **`year`**: Excluido de la matriz de predictores $X$ para evitar sesgos de tendencia temporal; reservado para la partición cronológica.
 - **`nationality_*`**: Excluidas de la matriz $X$; su eliminación reduce ruido y esparsidad dimensional, optimizando la generalización en todos los modelos.
 
@@ -100,19 +101,20 @@ data = results.merge(
 
 ## 5. Estrategia de Partición y Validación Temporal
 
-### 5.1. Ordenación Cronológica y Partición 80/20
-Los datos se ordenan estrictamente por tiempo:
+### 5.1. Ordenación Cronológica y Partición Atómica (79.97% / 20.03%)
+Los datos se ordenan estrictamente por tiempo y se realiza el corte al término íntegro del GP de Abu Dabi 2012 (`year == 2012, round == 18`):
 ```python
 df_sorted = df.sort_values(['year', 'round', 'raceId']).reset_index(drop=True)
-split_idx = int(len(df_sorted) * 0.8)
+split_idx = df_sorted[(df_sorted['year'] == 2012) & (df_sorted['round'] == 18)].index.max() + 1
 
-train_df = df_sorted.iloc[:split_idx]  # 20,096 observaciones (Pasado)
-test_df  = df_sorted.iloc[split_idx:]  #  5,025 observaciones (Futuro)
+train_df = df_sorted.iloc[:split_idx]  # 20,020 observaciones (79.97%, Pasado)
+test_df  = df_sorted.iloc[split_idx:]  #  5,013 observaciones (20.03%, Futuro)
 
-# Exclusión explícita de raceId y win
-X_train = train_df.drop(columns=['win', 'raceId'], errors='ignore')
+# Exclusión explícita de win, raceId, driverId, year y nationality_*
+cols_to_exclude = ['win', 'raceId', 'driverId', 'year'] + [c for c in df_sorted.columns if c.startswith('nationality')]
+X_train = train_df.drop(columns=cols_to_exclude, errors='ignore')
 y_train = train_df['win']
-X_test  = test_df.drop(columns=['win', 'raceId'], errors='ignore')
+X_test  = test_df.drop(columns=cols_to_exclude, errors='ignore')
 y_test  = test_df['win']
 ```
 

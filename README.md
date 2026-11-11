@@ -3,9 +3,9 @@
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.4%2B-orange?logo=scikitlearn&logoColor=white)](https://scikit-learn.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Tests](https://img.shields.io/badge/Unit%20Tests-5%2F5%20Passing-brightgreen?logo=checkmarx&logoColor=white)](tests/test_temporal_integrity.py)
+[![Tests](https://img.shields.io/badge/Unit%20Tests-9%2F9%20Passing-brightgreen?logo=checkmarx&logoColor=white)](tests/test_temporal_integrity.py)
 [![Data Leakage](https://img.shields.io/badge/Data%20Leakage-0%25%20(Audited)-success)](INFORME_REFACTORIZACION_Y_AUDITORIA_METODOLOGICA.md)
-[![Canonical Dataset](https://img.shields.io/badge/Canonical%20Dataset-25%2C121%20Races-red)](data/preparar_datos_tesis.py)
+[![Canonical Dataset](https://img.shields.io/badge/Canonical%20Dataset-25%2C033%20Rows-red)](data/preparar_datos_tesis.py)
 [![GitHub Pages](https://img.shields.io/badge/Live%20Showcase-GitHub%20Pages-00f0ff?logo=github)](docs/index.html)
 
 > **Trabajo de Tesis de Maestría:** *Predicción de Victorias en Fórmula 1 mediante Aprendizaje Automático: Un Estudio Comparativo de Modelos Predictivos.*  
@@ -36,7 +36,7 @@ El objetivo científico de este proyecto consiste en evaluar la capacidad predic
 
 ### Los Dos Grandes Desafíos Metodológicos
 1. **Desbalance Extremo de Clases (1:21.3):**  
-   En cada Gran Premio compiten entre 20 y 24 pilotos y solo uno resulta vencedor. La clase positiva (`win = 1`) representa únicamente el **4.49%** del total histórico (1,128 victorias frente a 23,993 no victorias), lo que provoca el colapso de clasificadores estándar si no se compensa adecuadamente la función de pérdida o el umbral de decisión.
+   En cada Gran Premio compiten entre 20 y 24 pilotos y solo uno resulta vencedor. La clase positiva (`win = 1`) representa únicamente el **4.49%** del total histórico (1,125 victorias frente a 23,908 no victorias), lo que provoca el colapso de clasificadores estándar si no se compensa adecuadamente la función de pérdida o el umbral de decisión.
 2. **Causalidad Temporal Estricta y Riesgo de *Data Leakage*:**  
    A diferencia de los problemas tabulares comunes, los eventos de Fórmula 1 son estrictamente secuenciales. El uso inadvertido de particiones aleatorias (`train_test_split(shuffle=True)`), identificadores correlacionados cronológicamente (`raceId`) o métricas intra-carrera invalida científicamente los resultados al filtrar información del futuro hacia el pasado.
 
@@ -64,13 +64,13 @@ Tras una rigurosa auditoría metodológica interna y un estudio de ablación dim
                                                         ❌ nationality_* (Excluidas; ruido dimensional)
                                  │
                                  ▼
-                     CANONICAL DATASET (25,121 Observaciones)
+                     CANONICAL DATASET (25,033 Observaciones)
                                  │
                  ┌───────────────┴───────────────────────────────┐
                  ▼                                               ▼
-         ENTRENAMIENTO (80%)                              PRUEBA CIEGA (20%)
-         20,096 Observaciones                             5,025 Observaciones
-     1950-05-13 a 2012-11-04 (Abu Dabi)               2012-11-04 a 2024-11-03 (São Paulo)
+      ENTRENAMIENTO (79.97%)                           PRUEBA CIEGA (20.03%)
+        20,020 Observaciones                             5,013 Observaciones
+    1950-05-13 a 2012-11-04 (Abu Dabi)              2012-11-18 (Austin) a 2024-12-08 (Abu Dabi)
 ```
 
 ### Invariantes de Integridad Garantizadas
@@ -87,7 +87,7 @@ Tras una rigurosa auditoría metodológica interna y un estudio de ablación dim
 
 ## 🤖 3. Modelos Predictivos en el Alcance Oficial de la Tesis
 
-El estudio evalúa de forma homogénea tres paradigmas de modelado sobre el dataset canónico de 25,121 filas:
+El estudio evalúa de forma homogénea tres paradigmas de modelado sobre el dataset canónico de 25,033 filas:
 
 | Script | Paradigma Algorítmico | Propósito y Configuración |
 |---|---|---|
@@ -126,17 +126,17 @@ python -m unittest discover tests -v
 2. `test_02_time_series_split_expanding_folds`: Simula y valida los 5 pliegues expansivos de `TimeSeriesSplit`, garantizando que ninguna carrera de validación anteceda al entrenamiento.
 3. `test_03_no_prohibited_in_race_features`: Inspecciona el dataset para descartar la presencia de variables intra-carrera o post-carrera.
 4. `test_04_raceid_excluded_from_model_features`: Aplica análisis estático sobre el código de los tres modelos oficiales para constatar la exclusión programática de `raceId`, `year` y `nationality`.
-5. `test_05_unified_dataset_size`: Verifica la integridad muestral exacta con $N = 25,121$ observaciones.
+5. `test_05_unified_dataset_size`: Verifica la integridad muestral exacta con $N = 25,033$ observaciones (y `test_04_single_winner_per_race_rule` en [`tests/test_pilot_race_uniqueness.py`](tests/test_pilot_race_uniqueness.py) valida `1,125` victorias únicas).
 
 **Resultado:**
 ```text
-Ran 5 tests in 0.921s
+Ran 9 tests in 1.159s
 OK
-[OK] Frontera Temporal 80/20 Validada (Train: 20,096 | Test: 5,025)
+[OK] Frontera Temporal Atómica Validada (Train: 20,020 | Test: 5,013)
 [OK] Validando 5 folds de TimeSeriesSplit
 [OK] Cero variables post-carrera prohibidas en el dataset
 [OK] Exclusión de 'raceId', 'year' y 'nationality' confirmada en los 3 modelos oficiales
-[OK] Integridad Muestral: 25,121 observaciones confirmadas
+[OK] Integridad Muestral: 25,033 observaciones confirmadas (1,125 victorias únicas)
 ```
 
 ---
@@ -153,7 +153,7 @@ f1_master_project/
 │
 ├── data/                                    # Pipeline y fuentes de datos
 │   ├── preparar_datos_tesis.py              # Script oficial de extracción y generación del dataset pre-carrera
-│   └── dataset_tesis_f1.csv                 # Dataset unificado oficial (25,121 filas) [Regenerable]
+│   └── dataset_tesis_f1.csv                 # Dataset unificado oficial (25,033 filas) [Regenerable]
 │
 ├── docs/                                    # Sitio web interactivo para GitHub Pages
 │   ├── index.html                           # Aplicación web completa con Dashboard y Simulador Pit Wall

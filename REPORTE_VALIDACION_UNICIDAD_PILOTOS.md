@@ -46,8 +46,8 @@ Donde:
 
 ### 3.3. Era Primitiva y Regulación de Relevos Compartidos (1950-1964)
 * En las primeras décadas del campeonato, la FIA permitía la figura deportiva de *shared drives*. Si el monoplaza de un piloto sufría una falla mecánica durante la carrera, este podía tomar el monoplaza de un compañero de equipo.
-* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **0 instancias históricas** (88 filas excedentes en 41 carreras).
-* **Criterio Metodológico Pre-Carrera:** Debido a que el modelo predice la probabilidad de triunfo en $t_0$ (antes de la largada), la reasignación de coches durante la carrera representa un evento posterior a la largada. Por consiguiente, retener la posición inicial de largada en parrilla (`grid > 0`) elimina la duplicidad y restituye la biyección matemática:
+* La base de datos Ergast registra estos relevos asignando al piloto tanto su coche original de largada como el coche al que se subió en boxes, lo que generó **82 pares piloto-carrera duplicados** en los datos con `grid > 0` (88 filas excedentes en 39 carreras: 3 registros de co-ganadores y 85 registros de relevos no ganadores).
+* **Criterio Metodológico Aplicado (Prioridad al Piloto Ganador):** En cada Gran Premio se garantiza exactamente 1 ganador (`win = 1`, conservando a Fangio en Francia 1951 y Argentina 1956, y a Moss en Gran Bretaña 1957), mientras que para los pilotos que no ganaron se conserva la fila con la que largaron originalmente (`resultId` ascendente), eliminando la duplicidad y restituyendo la biyección matemática:
   $$N(r, d) = 1 \quad \forall r \in \mathcal{R}, \forall d \in \mathcal{D}_r$$
 
 ---

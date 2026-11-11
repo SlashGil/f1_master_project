@@ -23,8 +23,8 @@ Como resultado de las directrices metodológicas de la tesis:
    *(El modelo de regresión lineal ha sido desestimado y archivado por no formar parte del alcance oficial).*
 2. **Depuración Dimensional de Características:** Se eliminaron las variables `year` (que introducía sesgo de tendencia cronológica global) y `nationality` (cuyas 43 columnas dummy generaban alta esparsidad y ruido sin capacidad predictiva). Esto redujo el espacio de características de 245 a **201 variables pre-carrera homogéneas**.
 3. **Erradicación de `raceId`:** Se garantizó que la clave autoincremental `raceId` actúe únicamente como índice de ordenación y trazabilidad interna, quedando 100% excluida de los predictores.
-4. **Validación Temporal Invariante:** Se mantuvo intacta la partición cronológica causal 80/20 sobre las **25,121 observaciones** oficiales:
-   $$\max(\text{fecha}_{\text{train}}) \le \min(\text{fecha}_{\text{test}})$$
+4. **Validación Temporal Invariante:** Se consolidó la partición cronológica causal atómica sobre las **25,033 observaciones** oficiales (`20,020` en Train [`79.97%`] / `5,013` en Test [`20.03%`]):
+   $$\max(\text{fecha}_{\text{train}}) < \min(\text{fecha}_{\text{test}})$$
 5. **Impacto Experimental Comprobado:** La eliminación de `year` y `nationality` mejoró categóricamente el rendimiento predictivo en **todos** los modelos del proyecto, elevando el AUC-ROC del Random Forest a **0.9265**, el de la Regresión Logística a **0.9233** y el de la red neuronal MLP a **0.8818**.
 
 ---
@@ -74,9 +74,9 @@ La suite automatizada [`tests/test_temporal_integrity.py`](tests/test_temporal_i
 Ran 5 tests in 0.921s
 OK
 
-[OK] Frontera Temporal 80/20 Validada:
-     • Train (80% Pasado): 20,096 filas | Fecha máx: 2012-11-04
-     • Test  (20% Futuro):  5,025 filas | Fecha mín: 2012-11-04
+[OK] Frontera Temporal Atómica Validada:
+     • Train (79.97% Pasado): 20,020 filas | Fecha máx: 2012-11-04
+     • Test  (20.03% Futuro):  5,013 filas | Fecha mín: 2012-11-18
 
 [OK] Validando 5 folds de TimeSeriesSplit:
      • Fold 1: Train (4,186 filas, máx 1971-06-20) <= Val (4,186 filas, mín 1971-06-20)
@@ -91,7 +91,7 @@ OK
      • 3_perceptron_multicapa.py  -> Excluye 'raceId', 'year' y 'nationality' explícitamente.
      • 4_regresion_logistica.py   -> Excluye 'raceId', 'year' y 'nationality' explícitamente.
 
-[OK] Integridad Muestral: 25,121 observaciones confirmadas.
+[OK] Integridad Muestral: 25,033 observaciones confirmadas.
 ```
 
 ---
