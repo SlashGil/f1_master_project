@@ -5,25 +5,51 @@ MODELO 2: RANDOM FOREST (BASELINE + GRID SEARCH)
 
 Este script entrena y evalúa dos variantes de Random Forest:
 1) Baseline con hiperparámetros fijos
-2) Tuning con GridSearchCV
+2) Tuning con GridSearchCV y validación temporal por carreras (Race-Aware TimeSeriesSplit)
 
 Cada variante genera sus propios artefactos en carpetas separadas.
 """
 
 import os
+import sys
+import tempfile
 import warnings
+
+# Configuración de codificación para terminales Windows
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+# Evitar advertencias de directorio de cache de matplotlib y problemas con GUI en Windows/multiprocessing
+os.environ.setdefault("MPLCONFIGDIR", os.path.join(tempfile.gettempdir(), "matplotlib"))
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+try:
+    import seaborn as sns
+except ImportError:
+    sns = None
+
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import (
     f1_score,
     roc_auc_score,
     precision_score,
     recall_score,
+    accuracy_score,
     classification_report,
     confusion_matrix,
     roc_curve,
@@ -33,10 +59,6 @@ from sklearn.metrics import (
 
 warnings.filterwarnings("ignore")
 
-# ============================================================================
-# CONFIGURACIÓN
-# ============================================================================
-
 plt.style.use("seaborn-v0_8-darkgrid")
 plt.rcParams["figure.figsize"] = [12, 8]
 
@@ -44,62 +66,37 @@ DATA_DIR = "data" if os.path.exists("data") else "../data"
 OUTPUT_BASELINE = "resultados_random_forest_baseline" if os.path.exists("data") else "../resultados_random_forest_baseline"
 OUTPUT_GRID = "resultados_random_forest_grid_search" if os.path.exists("data") else "../resultados_random_forest_grid_search"
 
-os.makedirs(OUTPUT_BASELINE, exist_ok=True)
-os.makedirs(OUTPUT_GRID, exist_ok=True)
 
-print("=" * 80)
-print("MODELO 2: RANDOM FOREST - BASELINE + GRID SEARCH")
-print("=" * 80)
-
-# ============================================================================
-# CARGA Y PREPARACIÓN DE DATOS
-# ============================================================================
-
-print("\n[1/4] Cargando dataset procesado...")
-
-df = pd.read_csv(f"{DATA_DIR}/dataset_tesis_f1.csv")
-print(f"Dataset: {df.shape[0]} filas, {df.shape[1]} columnas")
-
-print("\n[2/4] Aplicando split temporal (80/20)...")
-
-# 1. Ordenar el dataframe cronológicamente
-if {"year", "round", "raceId"}.issubset(df.columns):
-    df_sorted = df.sort_values(["year", "round", "raceId"]).reset_index(drop=True)
-else:
-    df_sorted = df.sort_values("raceId").reset_index(drop=True)
-
-# 2. Definir features (X) y target (y)
-# Se excluye 'raceId' (identificador), 'win' (target) y 'year'/'nationality_*' (fuera de tesis).
-cols_to_exclude = ["win", "raceId", "driverId", "year"] + [c for c in df_sorted.columns if c.startswith("nationality")]
-X = df_sorted.drop(columns=cols_to_exclude, errors="ignore")
-y = df_sorted["win"]
-print(f"Features seleccionados: {X.shape[1]} variables (sin 'year' ni 'nationality')")
-
-# 3. Realizar el split temporal atómico (GP Abu Dabi 2012 íntegro en Train)
-if {"year", "round"}.issubset(df_sorted.columns) and ((df_sorted["year"] == 2012) & (df_sorted["round"] == 18)).any():
-    split_idx = df_sorted[(df_sorted["year"] == 2012) & (df_sorted["round"] == 18)].index.max() + 1
-else:
-    split_idx = int(len(df_sorted) * 0.8)
-
-train_df = df_sorted.iloc[:split_idx]
-test_df = df_sorted.iloc[split_idx:]
-
-X_train = X.iloc[:split_idx]
-y_train = y.iloc[:split_idx]
-X_test = X.iloc[split_idx:]
-y_test = y.iloc[split_idx:]
-
-print(f"Train: {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.2f}%) | Test: {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.2f}%)")
-print("✓ Split temporal atómico: GP Abu Dabi 2012 100% en Train, Test inicia en GP EE.UU. 2012")
+def race_aware_time_series_split(df_subset, n_splits=5):
+    """Genera pliegues temporales agrupados por carreras completas (raceId),
+    garantizando que ninguna carrera individual quede dividida entre entrenamiento y validación."""
+    unique_races = df_subset["raceId"].drop_duplicates().tolist()
+    n_races = len(unique_races)
+    split_size = n_races // (n_splits + 1)
+    splits = []
+    for i in range(1, n_splits + 1):
+        train_races = set(unique_races[:split_size * i])
+        val_races = set(unique_races[split_size * i : split_size * (i + 1)])
+        tr_idx = df_subset.index[df_subset["raceId"].isin(train_races)].values
+        val_idx = df_subset.index[df_subset["raceId"].isin(val_races)].values
+        splits.append((tr_idx, val_idx))
+    return splits
 
 
-# ============================================================================
-# FUNCIONES
-# ============================================================================
-
-def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params=None, best_cv_f1=None):
+def evaluar_y_guardar(
+    model,
+    output_dir,
+    model_label,
+    feature_names,
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    test_df,
+    best_params=None,
+    best_cv_f1=None,
+):
     """Evalúa modelo y guarda métricas + visualizaciones en output_dir."""
-
     print("\n" + "-" * 80)
     print(f"Evaluando: {model_label}")
     print("-" * 80)
@@ -116,13 +113,28 @@ def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params
     pr_auc = average_precision_score(y_test, y_test_pred_proba)
     test_precision = precision_score(y_test, y_test_pred_binary)
     test_recall = recall_score(y_test, y_test_pred_binary)
+    test_acc = accuracy_score(y_test, y_test_pred_binary)
 
+    # Evaluación de precisión por carrera (ArgMax: piloto con mayor P(win) en cada GP)
+    test_eval_df = test_df[["raceId", "win"]].copy()
+    test_eval_df["pred_proba"] = y_test_pred_proba
+    carreras_acertadas = 0
+    total_carreras = 0
+    for rid, group in test_eval_df.groupby("raceId"):
+        idx_max = group["pred_proba"].idxmax()
+        if group.loc[idx_max, "win"] == 1:
+            carreras_acertadas += 1
+        total_carreras += 1
+    acc_carrera = (carreras_acertadas / total_carreras * 100) if total_carreras > 0 else 0.0
+
+    print(f"Accuracy Test: {test_acc:.4f}")
     print(f"F1 Train: {f1_train:.4f}")
     print(f"F1 Test: {f1_test:.4f}")
     print(f"AUC-ROC: {roc_auc:.4f}")
     print(f"AUC-PR: {pr_auc:.4f}")
     print(f"Precision: {test_precision:.4f}")
     print(f"Recall: {test_recall:.4f}")
+    print(f"Precisión por Carrera (ArgMax): {acc_carrera:.2f}% ({carreras_acertadas}/{total_carreras} GPs ganados acertados)")
 
     print("\nClassification report:")
     print(
@@ -137,11 +149,15 @@ def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params
     # CSV métricas comparables
     metricas = {
         "Modelo": model_label,
+        "Accuracy_Test": test_acc,
         "F1_Test": f1_test,
         "AUC_ROC": roc_auc,
         "AUC_PR": pr_auc,
         "Precision_Test": test_precision,
         "Recall_Test": test_recall,
+        "Precision_Carrera_ArgMax": acc_carrera,
+        "GPs_Acertados": carreras_acertadas,
+        "Total_GPs": total_carreras,
         "Train_Size": X_train.shape[0],
         "Test_Size": X_test.shape[0],
     }
@@ -212,17 +228,31 @@ def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params
 
     # 4) Confusion matrix
     cm = confusion_matrix(y_test, y_test_pred_binary)
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(
-        cm,
-        annot=True,
-        fmt="d",
-        cmap="Oranges_r",
-        annot_kws={"size": 14},
-        cbar_kws={"label": "Número de Predicciones"},
-        xticklabels=["Pred: No Victoria", "Pred: Victoria"],
-        yticklabels=["Real: No Victoria", "Real: Victoria"],
-    )
+    fig, ax = plt.subplots(figsize=(10, 8))
+    if sns is not None:
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Oranges_r",
+            annot_kws={"size": 14},
+            cbar_kws={"label": "Número de Predicciones"},
+            xticklabels=["Pred: No Victoria", "Pred: Victoria"],
+            yticklabels=["Real: No Victoria", "Real: Victoria"],
+            ax=ax,
+        )
+    else:
+        im = ax.imshow(cm, interpolation="nearest", cmap="Oranges")
+        fig.colorbar(im, ax=ax, label="Número de Predicciones")
+        ax.set_xticks([0, 1])
+        ax.set_yticks([0, 1])
+        ax.set_xticklabels(["Pred: No Victoria", "Pred: Victoria"], fontsize=12)
+        ax.set_yticklabels(["Real: No Victoria", "Real: Victoria"], fontsize=12)
+        for i in range(2):
+            for j in range(2):
+                val = cm[i, j]
+                color = "white" if val > cm.max() / 2 else "black"
+                ax.text(j, i, f"{val:,}", ha="center", va="center", color=color, fontsize=14, fontweight="bold")
     plt.xlabel("Predicción")
     plt.ylabel("Valor real")
     plt.title(f"Matriz de Confusión - {model_label}")
@@ -305,103 +335,148 @@ def evaluar_y_guardar(model, output_dir, model_label, feature_names, best_params
     print(f"Resultados guardados en: {output_dir}")
 
 
-# ============================================================================
-# ENTRENAMIENTO BASELINE
-# ============================================================================
+def main():
+    os.makedirs(OUTPUT_BASELINE, exist_ok=True)
+    os.makedirs(OUTPUT_GRID, exist_ok=True)
 
-print("\n[3/4] Entrenando Random Forest baseline...")
-baseline_model = RandomForestClassifier(
-    n_estimators=100,
-    max_depth=10,
-    min_samples_split=5,
-    min_samples_leaf=2,
-    class_weight="balanced",
-    random_state=42,
-    n_jobs=-1,
-)
-baseline_model.fit(X_train, y_train)
+    print("=" * 80)
+    print("MODELO 2: RANDOM FOREST - BASELINE + GRID SEARCH")
+    print("=" * 80)
 
-baseline_params = {
-    "n_estimators": 100,
-    "max_depth": 10,
-    "min_samples_split": 5,
-    "min_samples_leaf": 2,
-    "class_weight": "balanced",
-}
+    # ============================================================================
+    # CARGA Y PREPARACIÓN DE DATOS
+    # ============================================================================
+
+    print("\n[1/4] Cargando dataset procesado...")
+    df = pd.read_csv(f"{DATA_DIR}/dataset_tesis_f1.csv")
+    print(f"Dataset: {df.shape[0]} filas, {df.shape[1]} columnas")
+
+    print("\n[2/4] Aplicando split temporal atómico (Abu Dabi 2012)...")
+
+    # 1. Ordenar el dataframe cronológicamente
+    if {"year", "round", "raceId"}.issubset(df.columns):
+        df_sorted = df.sort_values(["year", "round", "raceId"]).reset_index(drop=True)
+    else:
+        df_sorted = df.sort_values("raceId").reset_index(drop=True)
+
+    # 2. Definir features (X) y target (y)
+    # Se excluye 'raceId' (identificador), 'win' (target) y 'year'/'nationality_*' (fuera de tesis).
+    cols_to_exclude = ["win", "raceId", "driverId", "year"] + [c for c in df_sorted.columns if c.startswith("nationality")]
+    X = df_sorted.drop(columns=cols_to_exclude, errors="ignore")
+    y = df_sorted["win"]
+    print(f"Features seleccionados: {X.shape[1]} variables (sin 'year' ni 'nationality')")
+
+    # 3. Realizar el split temporal atómico (GP Abu Dabi 2012 íntegro en Train)
+    if {"year", "round"}.issubset(df_sorted.columns) and ((df_sorted["year"] == 2012) & (df_sorted["round"] == 18)).any():
+        split_idx = df_sorted[(df_sorted["year"] == 2012) & (df_sorted["round"] == 18)].index.max() + 1
+    else:
+        split_idx = int(len(df_sorted) * 0.8)
+
+    train_df = df_sorted.iloc[:split_idx].copy().reset_index(drop=True)
+    test_df = df_sorted.iloc[split_idx:].copy().reset_index(drop=True)
+
+    X_train = X.iloc[:split_idx].copy().reset_index(drop=True)
+    y_train = y.iloc[:split_idx].copy().reset_index(drop=True)
+    X_test = X.iloc[split_idx:].copy().reset_index(drop=True)
+    y_test = y.iloc[split_idx:].copy().reset_index(drop=True)
+
+    print(f"Train: {X_train.shape[0]} muestras ({X_train.shape[0]/len(df_sorted)*100:.2f}%) | Test: {X_test.shape[0]} muestras ({X_test.shape[0]/len(df_sorted)*100:.2f}%)")
+    print("✓ Split temporal atómico: GP Abu Dabi 2012 100% en Train, Test inicia en GP EE.UU. 2012")
+
+    # ============================================================================
+    # ENTRENAMIENTO BASELINE
+    # ============================================================================
+
+    print("\n[3/4] Entrenando Random Forest baseline...")
+    baseline_model = RandomForestClassifier(
+        n_estimators=100,
+        max_depth=10,
+        min_samples_split=5,
+        min_samples_leaf=2,
+        class_weight="balanced",
+        random_state=42,
+        n_jobs=-1,
+    )
+    baseline_model.fit(X_train, y_train)
+
+    baseline_params = {
+        "n_estimators": 100,
+        "max_depth": 10,
+        "min_samples_split": 5,
+        "min_samples_leaf": 2,
+        "class_weight": "balanced",
+    }
+
+    evaluar_y_guardar(
+        model=baseline_model,
+        output_dir=OUTPUT_BASELINE,
+        model_label="Random Forest (Baseline)",
+        feature_names=X.columns,
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        test_df=test_df,
+        best_params=baseline_params,
+        best_cv_f1=None,
+    )
+
+    # ============================================================================
+    # ENTRENAMIENTO GRID SEARCH
+    # ============================================================================
+
+    print("\n[4/4] Entrenando Random Forest con GridSearchCV...")
+
+    base_model = RandomForestClassifier(
+        class_weight="balanced",
+        random_state=42,
+        n_jobs=-1,
+    )
+
+    param_grid = {
+        "n_estimators": [100, 200],
+        "max_depth": [8, 10, 12],
+        "min_samples_split": [2, 5],
+        "min_samples_leaf": [2, 4, 8],
+    }
+
+    cv_strategy = race_aware_time_series_split(train_df, n_splits=5)
+
+    grid_search = GridSearchCV(
+        estimator=base_model,
+        param_grid=param_grid,
+        scoring="f1",
+        cv=cv_strategy,
+        n_jobs=-1,
+        verbose=1,
+    )
+
+    grid_search.fit(X_train, y_train)
+    grid_model = grid_search.best_estimator_
+
+    print(f"\nMejor F1 CV: {grid_search.best_score_:.4f}")
+    print(f"Mejores parámetros: {grid_search.best_params_}")
+
+    evaluar_y_guardar(
+        model=grid_model,
+        output_dir=OUTPUT_GRID,
+        model_label="Random Forest (GridSearch)",
+        feature_names=X.columns,
+        X_train=X_train,
+        y_train=y_train,
+        X_test=X_test,
+        y_test=y_test,
+        test_df=test_df,
+        best_params=grid_search.best_params_,
+        best_cv_f1=grid_search.best_score_,
+    )
+
+    print("\n" + "=" * 80)
+    print("PROCESO COMPLETADO")
+    print("=" * 80)
+    print(f"Carpeta baseline: {OUTPUT_BASELINE}")
+    print(f"Carpeta tuning:   {OUTPUT_GRID}")
 
 
-evaluar_y_guardar(
-    model=baseline_model,
-    output_dir=OUTPUT_BASELINE,
-    model_label="Random Forest (Baseline)",
-    feature_names=X.columns,
-    best_params=baseline_params,
-    best_cv_f1=None,
-)
-
-
-# ============================================================================
-# ENTRENAMIENTO GRID SEARCH
-# ============================================================================
-
-print("\n[4/4] Entrenando Random Forest con GridSearchCV...")
-
-base_model = RandomForestClassifier(
-    class_weight="balanced",
-    random_state=42,
-    n_jobs=-1,
-)
-
-param_grid = {
-    "n_estimators": [100, 200],
-    "max_depth": [8, 10, 12],
-    "min_samples_split": [2, 5],
-    "min_samples_leaf": [2, 4, 8],
-}
-
-def race_aware_time_series_split(df_subset, n_splits=5):
-    """Genera pliegues temporales agrupados por carreras completas (raceId),
-    garantizando que ninguna carrera individual quede dividida entre entrenamiento y validación."""
-    unique_races = df_subset["raceId"].drop_duplicates().tolist()
-    n_races = len(unique_races)
-    split_size = n_races // (n_splits + 1)
-    splits = []
-    for i in range(1, n_splits + 1):
-        train_races = set(unique_races[:split_size * i])
-        val_races = set(unique_races[split_size * i : split_size * (i + 1)])
-        tr_idx = df_subset.index[df_subset["raceId"].isin(train_races)].values
-        val_idx = df_subset.index[df_subset["raceId"].isin(val_races)].values
-        splits.append((tr_idx, val_idx))
-    return splits
-
-cv_strategy = race_aware_time_series_split(train_df, n_splits=5)
-
-grid_search = GridSearchCV(
-    estimator=base_model,
-    param_grid=param_grid,
-    scoring="f1",
-    cv=cv_strategy,
-    n_jobs=-1,
-    verbose=1,
-)
-
-grid_search.fit(X_train, y_train)
-grid_model = grid_search.best_estimator_
-
-print(f"Mejor F1 CV: {grid_search.best_score_:.4f}")
-print(f"Mejores parámetros: {grid_search.best_params_}")
-
-evaluar_y_guardar(
-    model=grid_model,
-    output_dir=OUTPUT_GRID,
-    model_label="Random Forest (GridSearch)",
-    feature_names=X.columns,
-    best_params=grid_search.best_params_,
-    best_cv_f1=grid_search.best_score_,
-)
-
-print("\n" + "=" * 80)
-print("PROCESO COMPLETADO")
-print("=" * 80)
-print(f"Carpeta baseline: {OUTPUT_BASELINE}")
-print(f"Carpeta tuning:   {OUTPUT_GRID}")
+if __name__ == "__main__":
+    main()
