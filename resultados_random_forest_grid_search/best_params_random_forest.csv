@@ -1,2 +1,2 @@
-Modelo,Best_CV_F1,max_depth,min_samples_leaf,min_samples_split,n_estimators
-Random Forest (GridSearch),0.31317083575281224,12,2,2,100
+Modelo,Best_CV_Score,Threshold_OOF,F1_OOF_Train,max_depth,min_samples_leaf,min_samples_split,n_estimators
+Random Forest (GridSearch),0.8866606604986378,0.11937904643310165,0.4195740824644417,8,4,2,200

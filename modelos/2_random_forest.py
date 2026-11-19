@@ -1,11 +1,18 @@
 """
 ========================================
-MODELO 2: RANDOM FOREST (BASELINE + GRID SEARCH)
+MODELO 2: RANDOM FOREST (BASELINE + GRID SEARCH CON UMBRAL CALIBRADO)
 ========================================
 
 Este script entrena y evalúa dos variantes de Random Forest:
 1) Baseline con hiperparámetros fijos
 2) Tuning con GridSearchCV y validación temporal por carreras (Race-Aware TimeSeriesSplit)
+
+CRITERIO METODOLÓGICO Y CALIBRACIÓN DE UMBRAL (HOMOLOGADO CON REGRESIÓN LOGÍSTICA):
+  - class_weight=None: Probabilidades empíricas naturales sin distorsión de pesos artificiales.
+  - Umbral de decisión óptimo (τ*): Calibrado exclusivamente sobre el conjunto de entrenamiento
+    mediante predicciones Out-Of-Fold (OOF) con 5-Fold Race-Aware TimeSeriesSplit (sin fuga de datos).
+  - Métrica de optimización: Maximización de F1-Score para la clase victoria (win=1) en la curva PR.
+  - Evaluación complementaria de dominio: Precisión por carrera (ArgMax P(win) por raceId).
 
 Cada variante genera sus propios artefactos en carpetas separadas.
 """
@@ -83,6 +90,45 @@ def race_aware_time_series_split(df_subset, n_splits=5):
     return splits
 
 
+def calibrar_umbral_f1_oof(model_params, X_train, y_train, train_df, n_splits=5):
+    """
+    Calibra el umbral óptimo de decisión sin fuga de datos mediante Out-Of-Fold (OOF).
+    Aplica n_splits de Race-Aware TimeSeriesSplit sobre Train, generando predicciones
+    de probabilidad para cada fold de validación temporal y seleccionando el umbral
+    tau* que maximiza el F1-Score sobre la clase minoritaria (win=1).
+    """
+    print("\n🎯 Calibrando umbral óptimo sin fuga mediante 5-Fold Race-Aware TimeSeriesSplit en Train...")
+    cv_splits = race_aware_time_series_split(train_df, n_splits=n_splits)
+    oof_probas, oof_targets = [], []
+
+    fold_params = dict(model_params)
+    if fold_params.get("class_weight") == "None":
+        fold_params["class_weight"] = None
+
+    for fold_idx, (tr_idx, va_idx) in enumerate(cv_splits, 1):
+        fold_model = RandomForestClassifier(
+            **fold_params,
+            random_state=42,
+            n_jobs=-1,
+        )
+        fold_model.fit(X_train.iloc[tr_idx], y_train.iloc[tr_idx])
+        va_proba = fold_model.predict_proba(X_train.iloc[va_idx])[:, 1]
+        oof_probas.append(va_proba)
+        oof_targets.append(y_train.iloc[va_idx].values)
+
+    oof_probas = np.concatenate(oof_probas)
+    oof_targets = np.concatenate(oof_targets)
+
+    oof_prec, oof_rec, oof_thresh = precision_recall_curve(oof_targets, oof_probas)
+    oof_f1 = 2 * oof_prec[:-1] * oof_rec[:-1] / (oof_prec[:-1] + oof_rec[:-1] + 1e-12)
+    best_idx = int(np.argmax(oof_f1))
+    best_threshold = float(oof_thresh[best_idx])
+    best_oof_f1 = float(oof_f1[best_idx])
+
+    print(f"✓ Umbral óptimo calibrado (F1-max OOF Train): τ* = {best_threshold:.6f} (F1 OOF = {best_oof_f1:.4f})")
+    return best_threshold, best_oof_f1
+
+
 def evaluar_y_guardar(
     model,
     output_dir,
@@ -94,9 +140,11 @@ def evaluar_y_guardar(
     y_test,
     test_df,
     best_params=None,
-    best_cv_f1=None,
+    best_cv_score=None,
+    threshold=0.5,
+    oof_f1=None,
 ):
-    """Evalúa modelo y guarda métricas + visualizaciones en output_dir."""
+    """Evalúa modelo y guarda métricas + visualizaciones en output_dir aplicando umbral calibrado."""
     print("\n" + "-" * 80)
     print(f"Evaluando: {model_label}")
     print("-" * 80)
@@ -104,8 +152,9 @@ def evaluar_y_guardar(
     y_train_pred_proba = model.predict_proba(X_train)[:, 1]
     y_test_pred_proba = model.predict_proba(X_test)[:, 1]
 
-    y_train_pred_binary = model.predict(X_train)
-    y_test_pred_binary = model.predict(X_test)
+    # Binarización con umbral calibrado tau* (homologado con Regresión Logística)
+    y_train_pred_binary = (y_train_pred_proba >= threshold).astype(int)
+    y_test_pred_binary = (y_test_pred_proba >= threshold).astype(int)
 
     f1_train = f1_score(y_train, y_train_pred_binary)
     f1_test = f1_score(y_test, y_test_pred_binary)
@@ -127,6 +176,9 @@ def evaluar_y_guardar(
         total_carreras += 1
     acc_carrera = (carreras_acertadas / total_carreras * 100) if total_carreras > 0 else 0.0
 
+    print(f"Umbral aplicado (τ*): {threshold:.6f}")
+    if oof_f1 is not None:
+        print(f"F1 OOF (Train): {oof_f1:.4f}")
     print(f"Accuracy Test: {test_acc:.4f}")
     print(f"F1 Train: {f1_train:.4f}")
     print(f"F1 Test: {f1_test:.4f}")
@@ -146,16 +198,19 @@ def evaluar_y_guardar(
         )
     )
 
-    # CSV métricas comparables
+    # CSV métricas comparables homologadas
     metricas = {
         "Modelo": model_label,
-        "Accuracy_Test": test_acc,
         "F1_Test": f1_test,
         "AUC_ROC": roc_auc,
         "AUC_PR": pr_auc,
         "Precision_Test": test_precision,
         "Recall_Test": test_recall,
+        "Accuracy_Test": test_acc,
+        "Threshold_OOF": threshold,
+        "F1_OOF_Train": oof_f1 if oof_f1 is not None else np.nan,
         "Precision_Carrera_ArgMax": acc_carrera,
+        "ArgMax_Top1_Acc": acc_carrera / 100.0,
         "GPs_Acertados": carreras_acertadas,
         "Total_GPs": total_carreras,
         "Train_Size": X_train.shape[0],
@@ -175,7 +230,9 @@ def evaluar_y_guardar(
 
     params_row = {
         "Modelo": model_label,
-        "Best_CV_F1": best_cv_f1 if best_cv_f1 is not None else np.nan,
+        "Best_CV_Score": best_cv_score if best_cv_score is not None else np.nan,
+        "Threshold_OOF": threshold,
+        "F1_OOF_Train": oof_f1 if oof_f1 is not None else np.nan,
         **best_params,
     }
     pd.DataFrame([params_row]).to_csv(f"{output_dir}/best_params_random_forest.csv", index=False)
@@ -217,6 +274,10 @@ def evaluar_y_guardar(
     precision_vals, recall_vals, _ = precision_recall_curve(y_test, y_test_pred_proba)
     plt.figure(figsize=(10, 8))
     plt.plot(recall_vals, precision_vals, color="#2E86AB", lw=3, label=f"PR (AUC = {pr_auc:.4f})")
+    plt.scatter([test_recall], [test_precision], color="#D1495B", s=120, zorder=5,
+                label=f"Punto operativo τ*={threshold:.4f} (P={test_precision:.3f}, R={test_recall:.3f}, F1={f1_test:.3f})")
+    plt.axhline(float(y_test.mean()), color="gray", linestyle="--", linewidth=1.5,
+                label=f"Prevalencia Test = {y_test.mean():.4f}")
     plt.xlabel("Recall")
     plt.ylabel("Precision")
     plt.title(f"Precision-Recall Curve - {model_label}")
@@ -274,7 +335,8 @@ def evaluar_y_guardar(
         linewidth=0.3,
     )
     plt.plot([0, 1], [0, 1], "r--", lw=2, label="Línea identidad")
-    plt.axhline(y=0.5, color="orange", linestyle=":", lw=2, label="Umbral 0.5")
+    plt.axvline(x=threshold, color="green", linestyle="--", lw=2, label=f"Umbral óptimo τ* = {threshold:.4f}")
+    plt.axvline(x=0.5, color="orange", linestyle=":", lw=1.5, label="Umbral estándar 0.5")
     plt.xlabel("Probabilidad predicha")
     plt.ylabel("Valor real")
     plt.title(f"Predicciones vs Reales - {model_label}")
@@ -388,24 +450,25 @@ def main():
     # ============================================================================
 
     print("\n[3/4] Entrenando Random Forest baseline...")
-    baseline_model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=10,
-        min_samples_split=5,
-        min_samples_leaf=2,
-        class_weight="balanced",
-        random_state=42,
-        n_jobs=-1,
-    )
-    baseline_model.fit(X_train, y_train)
-
     baseline_params = {
         "n_estimators": 100,
         "max_depth": 10,
         "min_samples_split": 5,
         "min_samples_leaf": 2,
-        "class_weight": "balanced",
+        "class_weight": None,
     }
+
+    print("\nCalibrando umbral óptimo para Baseline (OOF en Train)...")
+    baseline_threshold, baseline_oof_f1 = calibrar_umbral_f1_oof(
+        baseline_params, X_train, y_train, train_df, n_splits=5
+    )
+
+    baseline_model = RandomForestClassifier(
+        **baseline_params,
+        random_state=42,
+        n_jobs=-1,
+    )
+    baseline_model.fit(X_train, y_train)
 
     evaluar_y_guardar(
         model=baseline_model,
@@ -418,7 +481,9 @@ def main():
         y_test=y_test,
         test_df=test_df,
         best_params=baseline_params,
-        best_cv_f1=None,
+        best_cv_score=None,
+        threshold=baseline_threshold,
+        oof_f1=baseline_oof_f1,
     )
 
     # ============================================================================
@@ -428,7 +493,7 @@ def main():
     print("\n[4/4] Entrenando Random Forest con GridSearchCV...")
 
     base_model = RandomForestClassifier(
-        class_weight="balanced",
+        class_weight=None,
         random_state=42,
         n_jobs=-1,
     )
@@ -442,10 +507,13 @@ def main():
 
     cv_strategy = race_aware_time_series_split(train_df, n_splits=5)
 
+    # Nota metodológica: en datos desbalanceados con class_weight=None, scoring="roc_auc"
+    # permite seleccionar los hiperparámetros con mayor capacidad discriminativa de probabilidades,
+    # sin quedar sesgados por el umbral rígido estándar de 0.5.
     grid_search = GridSearchCV(
         estimator=base_model,
         param_grid=param_grid,
-        scoring="f1",
+        scoring="roc_auc",
         cv=cv_strategy,
         n_jobs=-1,
         verbose=1,
@@ -454,8 +522,13 @@ def main():
     grid_search.fit(X_train, y_train)
     grid_model = grid_search.best_estimator_
 
-    print(f"\nMejor F1 CV: {grid_search.best_score_:.4f}")
+    print(f"\nMejor AUC-ROC CV: {grid_search.best_score_:.4f}")
     print(f"Mejores parámetros: {grid_search.best_params_}")
+
+    print("\nCalibrando umbral óptimo para Random Forest (GridSearch)...")
+    grid_threshold, grid_oof_f1 = calibrar_umbral_f1_oof(
+        grid_search.best_params_, X_train, y_train, train_df, n_splits=5
+    )
 
     evaluar_y_guardar(
         model=grid_model,
@@ -468,7 +541,9 @@ def main():
         y_test=y_test,
         test_df=test_df,
         best_params=grid_search.best_params_,
-        best_cv_f1=grid_search.best_score_,
+        best_cv_score=grid_search.best_score_,
+        threshold=grid_threshold,
+        oof_f1=grid_oof_f1,
     )
 
     print("\n" + "=" * 80)
